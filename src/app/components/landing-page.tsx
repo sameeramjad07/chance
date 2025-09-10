@@ -17,6 +17,7 @@ import {
   Calendar,
   ExternalLink,
 } from "lucide-react";
+import Link from "next/link";
 
 export function LandingPage() {
   const [scrollY, setScrollY] = useState(0);
@@ -104,16 +105,29 @@ export function LandingPage() {
               </a>
             </nav>
             <div className="flex items-center gap-2 sm:gap-3">
-              <Button
-                variant="ghost"
-                className="text-foreground hover:bg-accent/10 px-2 text-sm sm:px-4 sm:text-base"
-              >
-                Sign In
-              </Button>
-              <Button className="bg-accent hover:bg-accent/90 px-3 text-sm text-white shadow-lg sm:px-4 sm:text-base">
-                Get Started
-                <ArrowRight className="ml-1 h-3 w-3 sm:ml-2 sm:h-4 sm:w-4" />
-              </Button>
+              {/* Sign In → /signin */}
+              <Link href="/signin" passHref>
+                <Button
+                  asChild
+                  variant="ghost"
+                  className="text-foreground hover:bg-accent/10 px-2 text-sm sm:px-4 sm:text-base"
+                >
+                  <span>Sign In</span>
+                </Button>
+              </Link>
+
+              {/* Get Started → /signup */}
+              <Link href="/signup" passHref>
+                <Button
+                  asChild
+                  className="bg-accent hover:bg-accent/90 px-3 text-sm text-white shadow-lg sm:px-4 sm:text-base"
+                >
+                  <span className="flex items-center">
+                    Get Started
+                    <ArrowRight className="ml-1 h-3 w-3 sm:ml-2 sm:h-4 sm:w-4" />
+                  </span>
+                </Button>
+              </Link>
             </div>
           </div>
         </div>
@@ -154,21 +168,25 @@ export function LandingPage() {
           </p>
 
           <div className="mb-12 flex flex-col items-center justify-center gap-4 px-4 sm:mb-16 sm:flex-row sm:gap-6">
-            <Button
-              size="lg"
-              className="bg-accent hover:bg-accent/90 hover:shadow-accent/25 w-full transform px-8 py-4 text-base font-semibold text-white shadow-2xl transition-all duration-300 hover:scale-105 sm:w-auto sm:px-12 sm:py-6 sm:text-lg"
-            >
-              Start Your Journey
-              <ArrowRight className="ml-2 h-4 w-4 sm:ml-3 sm:h-5 sm:w-5" />
-            </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              className="border-accent/30 text-accent hover:bg-accent/5 w-full border-2 bg-transparent px-8 py-4 text-base font-semibold backdrop-blur-sm sm:w-auto sm:px-12 sm:py-6 sm:text-lg"
-            >
-              Explore Projects
-              <Globe className="ml-2 h-4 w-4 sm:ml-3 sm:h-5 sm:w-5" />
-            </Button>
+            <Link href="/signup" passHref>
+              <Button
+                size="lg"
+                className="bg-accent hover:bg-accent/90 hover:shadow-accent/25 w-full transform px-8 py-4 text-base font-semibold text-white shadow-2xl transition-all duration-300 hover:scale-105 sm:w-auto sm:px-12 sm:py-6 sm:text-lg"
+              >
+                Start Your Journey
+                <ArrowRight className="ml-2 h-4 w-4 sm:ml-3 sm:h-5 sm:w-5" />
+              </Button>
+            </Link>
+            <Link href="/projects" passHref>
+              <Button
+                size="lg"
+                variant="outline"
+                className="border-accent/30 text-accent hover:bg-accent/5 w-full border-2 bg-transparent px-8 py-4 text-base font-semibold backdrop-blur-sm sm:w-auto sm:px-12 sm:py-6 sm:text-lg"
+              >
+                Explore Projects
+                <Globe className="ml-2 h-4 w-4 sm:ml-3 sm:h-5 sm:w-5" />
+              </Button>
+            </Link>
           </div>
 
           <div className="mx-auto grid max-w-4xl grid-cols-1 gap-6 px-4 sm:grid-cols-3 sm:gap-8">
@@ -383,7 +401,7 @@ export function LandingPage() {
                     <Button
                       size="sm"
                       variant="outline"
-                      className="border-accent/30 text-accent hover:bg-accent/5 bg-transparent"
+                      className="border-accent/30 text-accent hover:bg-accent/5 cursor-pointer bg-transparent"
                     >
                       View Project
                       <ExternalLink className="ml-1 h-3 w-3" />
@@ -395,14 +413,16 @@ export function LandingPage() {
           </div>
 
           <div className="text-center">
-            <Button
-              size="lg"
-              variant="outline"
-              className="border-accent/30 text-accent hover:bg-accent/5 border-2 bg-transparent px-8 py-4 text-base font-semibold backdrop-blur-sm sm:px-12 sm:py-6 sm:text-lg"
-            >
-              View All Projects
-              <ArrowRight className="ml-2 h-4 w-4 sm:ml-3 sm:h-5 sm:w-5" />
-            </Button>
+            <Link href="/projects" passHref>
+              <Button
+                size="lg"
+                variant="outline"
+                className="border-accent/30 text-accent hover:bg-accent/5 border-2 bg-transparent px-8 py-4 text-base font-semibold backdrop-blur-sm sm:px-12 sm:py-6 sm:text-lg"
+              >
+                View All Projects
+                <ArrowRight className="ml-2 h-4 w-4 sm:ml-3 sm:h-5 sm:w-5" />
+              </Button>
+            </Link>
           </div>
         </div>
       </section>

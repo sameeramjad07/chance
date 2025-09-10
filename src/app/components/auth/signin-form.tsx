@@ -17,63 +17,53 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Eye, EyeOff, ArrowLeft, Zap, Mail } from "lucide-react";
 import Link from "next/link";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 export function SignInForm() {
   const router = useRouter();
-  const { toast } = useToast();
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleGoogleSignIn = async () => {
     try {
+      setIsLoading(true);
       const result = await signIn("google", {
         callbackUrl: "/dashboard",
         redirect: false,
       });
       if (result?.error) {
-        toast({
-          title: "Error",
-          description: result.error,
-          variant: "destructive",
-        });
+        toast(`Error: ${result.error}`);
       } else if (result?.url) {
         router.push(result.url);
       }
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to sign in with Google",
-        variant: "destructive",
-      });
+      toast("Error: Failed to sign in with Google");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      setIsLoading(true);
       const result = await signIn("credentials", {
         email,
         password,
         redirect: false,
-        callbackUrl: "/dashboard",
+        callbackUrl: "/",
       });
       if (result?.error) {
-        toast({
-          title: "Error",
-          description: result.error,
-          variant: "destructive",
-        });
+        toast(`Error: ${result.error}`);
       } else if (result?.url) {
         router.push(result.url);
       }
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to sign in",
-        variant: "destructive",
-      });
+      toast("Error: Failed to sign in");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -124,6 +114,7 @@ export function SignInForm() {
               variant="outline"
               className="border-border/50 hover:border-accent/30 w-full bg-transparent"
               onClick={handleGoogleSignIn}
+              disabled={isLoading}
             >
               <Mail className="mr-2 h-4 w-4" />
               Sign in with Google
@@ -157,6 +148,7 @@ export function SignInForm() {
                 onChange={(e) => setEmail(e.target.value)}
                 className="bg-input border-border/50 focus:border-accent focus:ring-accent/20"
                 required
+                disabled={isLoading}
               />
             </div>
 
@@ -176,6 +168,7 @@ export function SignInForm() {
                   onChange={(e) => setPassword(e.target.value)}
                   className="bg-input border-border/50 focus:border-accent focus:ring-accent/20 pr-10"
                   required
+                  disabled={isLoading}
                 />
                 <Button
                   type="button"
@@ -183,6 +176,7 @@ export function SignInForm() {
                   size="sm"
                   className="absolute top-0 right-0 h-full px-3 py-2 hover:bg-transparent"
                   onClick={() => setShowPassword(!showPassword)}
+                  disabled={isLoading}
                 >
                   {showPassword ? (
                     <EyeOff className="text-muted-foreground h-4 w-4" />
@@ -199,6 +193,7 @@ export function SignInForm() {
                   id="remember"
                   type="checkbox"
                   className="text-accent bg-input border-border focus:ring-accent h-4 w-4 rounded focus:ring-2"
+                  disabled={isLoading}
                 />
                 <Label
                   htmlFor="remember"
@@ -218,13 +213,14 @@ export function SignInForm() {
             <Button
               type="submit"
               className="bg-accent hover:bg-accent/90 w-full py-2.5 font-semibold text-white"
+              disabled={isLoading}
             >
-              Sign In
+              {isLoading ? "Signing in..." : "Sign In"}
             </Button>
           </form>
 
           <div className="text-muted-foreground text-center text-sm">
-            Don't have an account?{" "}
+            Don&apos;t have an account?{" "}
             <Link
               href="/signup"
               className="text-accent hover:text-accent/80 font-medium"

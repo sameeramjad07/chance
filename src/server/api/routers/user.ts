@@ -1,6 +1,6 @@
 // src/server/routers/user.ts
 import { z } from "zod";
-import { protectedProcedure } from "../trpc";
+import { protectedProcedure, createTRPCRouter, publicProcedure } from "../trpc";
 import { db } from "@/server/db";
 import {
   users,
@@ -10,8 +10,9 @@ import {
 } from "@/server/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
+import bcrypt from "bcrypt";
 
-export const userRouter = router({
+export const userRouter = createTRPCRouter({
   getProfile: protectedProcedure
     .input(z.string().optional()) // Optional userId, defaults to self
     .query(async ({ ctx, input }) => {
@@ -88,15 +89,15 @@ export const userRouter = router({
       .orderBy(desc(heartbeats.createdAt));
   }),
 
-  // Add signup mutation for email-based registration (if needed)
-  signup: router.procedure
+  // ---------- Signup ----------
+  signup: publicProcedure
     .input(
       z.object({
         email: z.string().email(),
         firstName: z.string().min(1),
         lastName: z.string().min(1),
-        username: z.string().min(3).optional(),
         whatsappNumber: z.string().min(10, "WhatsApp number is required"),
+        password: z.string().min(6, "Password must be at least 6 characters"),
       }),
     )
     .mutation(async ({ input }) => {
@@ -105,6 +106,7 @@ export const userRouter = router({
         .from(users)
         .where(eq(users.email, input.email))
         .limit(1);
+
       if (existingUser.length > 0) {
         throw new TRPCError({
           code: "CONFLICT",
@@ -112,19 +114,91 @@ export const userRouter = router({
         });
       }
 
+      // Generate username
+      const lastDigits = input.whatsappNumber.slice(-4);
+      const baseUsername = `${input.firstName}${input.lastName}${lastDigits}`
+        .replace(/\s+/g, "")
+        .toLowerCase();
+
+      let username = baseUsername;
+      let counter = 1;
+      while (
+        (
+          await db
+            .select()
+            .from(users)
+            .where(eq(users.username, username))
+            .limit(1)
+        ).length > 0
+      ) {
+        username = `${baseUsername}${counter}`;
+        counter++;
+      }
+
+      // Hash password
+      const hash = await bcrypt.hash(input.password, 10);
+
       const [newUser] = await db
         .insert(users)
         .values({
           email: input.email,
           firstName: input.firstName,
           lastName: input.lastName,
-          username: input.username,
+          username,
           whatsappNumber: input.whatsappNumber,
+          passwordHash: hash,
           profileCompleted: false,
           role: "user",
           isVerified: false,
         })
         .returning();
+
       return newUser;
+    }),
+
+  // ---------- Signin ----------
+  signin: publicProcedure
+    .input(
+      z.object({
+        email: z.string().email(),
+        password: z.string().min(6),
+      }),
+    )
+    .mutation(async ({ input }) => {
+      const [user] = await db
+        .select()
+        .from(users)
+        .where(eq(users.email, input.email))
+        .limit(1);
+
+      if (!user) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Invalid email or password",
+        });
+      }
+
+      const validPassword = await bcrypt.compare(
+        input.password,
+        user.passwordHash ?? "",
+      );
+
+      if (!validPassword) {
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: "Invalid email or password",
+        });
+      }
+
+      // At this point, user is authenticated
+      // If you’re using NextAuth, you typically return the user and let NextAuth manage session
+      return {
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        username: user.username,
+        role: user.role,
+      };
     }),
 });

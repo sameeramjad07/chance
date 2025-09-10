@@ -31,8 +31,8 @@ import {
   Clock,
   Users,
 } from "lucide-react";
-import { CreateHeartbeatModal } from "../modals/create-heartbeat-modal";
-import { CommentsModal } from "../modals/comments-modal";
+import { CreateHeartbeatModal } from "@/app/components/modals/create-heartbeat-modal";
+import { CommentsModal } from "@/app/components/modals/comments-modal";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -175,23 +175,23 @@ export function HeartbeatsTab() {
   };
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
+    <div className="space-y-4 px-4 md:space-y-6 md:px-0">
       {/* Search and Filter Bar */}
-      <div className="space-y-4">
+      <div className="space-y-3 md:space-y-4">
         <div className="relative">
           <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform" />
           <Input
             placeholder="Search heartbeats, hashtags, or users..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
+            className="h-10 pl-10 md:h-9"
           />
         </div>
 
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div className="flex gap-2">
             <Select value={feedFilter} onValueChange={setFeedFilter}>
-              <SelectTrigger className="w-[120px]">
+              <SelectTrigger className="h-10 flex-1 md:h-9 md:w-[140px]">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -222,7 +222,11 @@ export function HeartbeatsTab() {
               </SelectContent>
             </Select>
           </div>
-          <Button onClick={() => setShowCreateModal(true)} size="sm">
+          <Button
+            onClick={() => setShowCreateModal(true)}
+            size="sm"
+            className="h-10 w-full md:h-9 md:w-auto"
+          >
             Create Post
           </Button>
         </div>
@@ -230,9 +234,9 @@ export function HeartbeatsTab() {
 
       {/* Quick Post */}
       <Card>
-        <CardContent className="pt-6">
+        <CardContent className="px-4 pt-4 md:px-6 md:pt-6">
           <div className="flex gap-3">
-            <Avatar className="h-10 w-10">
+            <Avatar className="h-8 w-8 flex-shrink-0 md:h-10 md:w-10">
               <AvatarImage src="/diverse-user-avatars.png" />
               <AvatarFallback>JD</AvatarFallback>
             </Avatar>
@@ -241,15 +245,23 @@ export function HeartbeatsTab() {
                 placeholder="Share your progress, celebrate wins, or ask for help..."
                 value={quickPostContent}
                 onChange={(e) => setQuickPostContent(e.target.value)}
-                className="min-h-[80px] resize-none"
+                className="min-h-[80px] resize-none text-sm md:text-base"
               />
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                 <div className="flex gap-2">
-                  <Button variant="ghost" size="sm">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-9 flex-1 md:flex-none"
+                  >
                     <ImageIcon className="mr-2 h-4 w-4" />
                     Photo
                   </Button>
-                  <Button variant="ghost" size="sm">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-9 flex-1 md:flex-none"
+                  >
                     <Video className="mr-2 h-4 w-4" />
                     Video
                   </Button>
@@ -258,6 +270,7 @@ export function HeartbeatsTab() {
                   size="sm"
                   onClick={handleQuickPost}
                   disabled={!quickPostContent.trim()}
+                  className="h-9 w-full md:w-auto"
                 >
                   <Send className="mr-2 h-4 w-4" />
                   Post
@@ -271,34 +284,41 @@ export function HeartbeatsTab() {
       {/* Heartbeats Feed */}
       {filteredHeartbeats.map((heartbeat) => (
         <Card key={heartbeat.id} className="transition-shadow hover:shadow-md">
-          <CardHeader className="pb-3">
+          <CardHeader className="px-4 pb-3 md:px-6">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <Avatar className="h-10 w-10">
+              <div className="flex min-w-0 flex-1 items-center gap-3">
+                <Avatar className="h-8 w-8 flex-shrink-0 md:h-10 md:w-10">
                   <AvatarImage
                     src={heartbeat.user.avatar || "/placeholder.svg"}
                   />
                   <AvatarFallback>{heartbeat.user.name[0]}</AvatarFallback>
                 </Avatar>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <p className="text-sm font-semibold">
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="truncate text-sm font-semibold md:text-base">
                       {heartbeat.user.name}
                     </p>
                     {heartbeat.projectId && (
-                      <Badge variant="outline" className="text-xs">
+                      <Badge
+                        variant="outline"
+                        className="flex-shrink-0 text-xs"
+                      >
                         {heartbeat.projectTitle}
                       </Badge>
                     )}
                   </div>
-                  <p className="text-muted-foreground text-xs">
+                  <p className="text-muted-foreground truncate text-xs md:text-sm">
                     {heartbeat.user.username} • {heartbeat.timestamp}
                   </p>
                 </div>
               </div>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 flex-shrink-0 p-0"
+                  >
                     <MoreHorizontal className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -333,10 +353,10 @@ export function HeartbeatsTab() {
               </DropdownMenu>
             </div>
           </CardHeader>
-          <CardContent className="pt-0">
+          <CardContent className="px-4 pt-0 md:px-6">
             <div className="space-y-3">
               {/* Content with hashtags and mentions highlighted */}
-              <div className="text-sm leading-relaxed">
+              <div className="text-sm leading-relaxed md:text-base">
                 {heartbeat.content.split(/(\s+)/).map((word, index) => {
                   if (word.startsWith("#")) {
                     return (
@@ -368,19 +388,19 @@ export function HeartbeatsTab() {
                     <img
                       src={heartbeat.images[0] || "/placeholder.svg"}
                       alt="Heartbeat content"
-                      className="h-auto max-h-96 w-full cursor-pointer object-cover transition-opacity hover:opacity-95"
+                      className="h-auto max-h-80 w-full cursor-pointer object-cover transition-opacity hover:opacity-95 md:max-h-96"
                     />
                   ) : (
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-2 gap-1 md:gap-2">
                       {heartbeat.images.slice(0, 4).map((image, index) => (
                         <div key={index} className="relative">
                           <img
                             src={image || "/placeholder.svg"}
                             alt={`Heartbeat content ${index + 1}`}
-                            className="h-32 w-full cursor-pointer object-cover transition-opacity hover:opacity-95"
+                            className="h-24 w-full cursor-pointer object-cover transition-opacity hover:opacity-95 md:h-32"
                           />
                           {index === 3 && heartbeat.images.length > 4 && (
-                            <div className="absolute inset-0 flex items-center justify-center bg-black/50 font-semibold text-white">
+                            <div className="absolute inset-0 flex items-center justify-center bg-black/50 text-sm font-semibold text-white">
                               +{heartbeat.images.length - 4}
                             </div>
                           )}
@@ -407,58 +427,62 @@ export function HeartbeatsTab() {
               )}
 
               {/* Engagement Stats */}
-              <div className="text-muted-foreground flex items-center justify-between pt-2 text-sm">
-                <div className="flex items-center gap-4">
+              <div className="text-muted-foreground flex items-center justify-between pt-2 text-xs md:text-sm">
+                <div className="flex items-center gap-3 md:gap-4">
                   <span>{heartbeat.likes} likes</span>
                   <span>{heartbeat.comments} comments</span>
-                  <span>{heartbeat.shares} shares</span>
+                  <span className="hidden md:inline">
+                    {heartbeat.shares} shares
+                  </span>
                 </div>
                 <span>{heartbeat.saves} saves</span>
               </div>
 
               {/* Actions */}
               <div className="border-border flex items-center justify-between border-t pt-2">
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-0 md:gap-1">
                   <Button
                     variant="ghost"
                     size="sm"
-                    className={`gap-2 ${heartbeat.isLiked ? "text-red-500" : ""}`}
+                    className={`h-9 gap-1 px-2 text-xs md:gap-2 md:px-3 md:text-sm ${heartbeat.isLiked ? "text-red-500" : ""}`}
                     onClick={() => handleLike(heartbeat.id)}
                   >
                     <Heart
                       className={`h-4 w-4 ${heartbeat.isLiked ? "fill-current" : ""}`}
                     />
-                    Like
+                    <span className="hidden md:inline">Like</span>
                   </Button>
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="gap-2"
+                    className="h-9 gap-1 px-2 text-xs md:gap-2 md:px-3 md:text-sm"
                     onClick={() => openComments(heartbeat)}
                   >
                     <MessageCircle className="h-4 w-4" />
-                    Comment
+                    <span className="hidden md:inline">Comment</span>
                   </Button>
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="gap-2"
+                    className="h-9 gap-1 px-2 text-xs md:gap-2 md:px-3 md:text-sm"
                     onClick={() => handleShare(heartbeat.id)}
                   >
                     <Share className="h-4 w-4" />
-                    Share
+                    <span className="hidden md:inline">Share</span>
                   </Button>
                 </div>
                 <Button
                   variant="ghost"
                   size="sm"
-                  className={`gap-2 ${heartbeat.isSaved ? "text-primary" : ""}`}
+                  className={`h-9 gap-1 px-2 text-xs md:gap-2 md:px-3 md:text-sm ${heartbeat.isSaved ? "text-primary" : ""}`}
                   onClick={() => handleSave(heartbeat.id)}
                 >
                   <Bookmark
                     className={`h-4 w-4 ${heartbeat.isSaved ? "fill-current" : ""}`}
                   />
-                  {heartbeat.isSaved ? "Saved" : "Save"}
+                  <span className="hidden md:inline">
+                    {heartbeat.isSaved ? "Saved" : "Save"}
+                  </span>
                 </Button>
               </div>
             </div>
@@ -468,7 +492,9 @@ export function HeartbeatsTab() {
 
       {/* Load More */}
       <div className="text-center">
-        <Button variant="outline">Load More Heartbeats</Button>
+        <Button variant="outline" className="w-full bg-transparent md:w-auto">
+          Load More Heartbeats
+        </Button>
       </div>
 
       {/* Modals */}

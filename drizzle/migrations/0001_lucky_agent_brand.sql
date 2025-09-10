@@ -1,0 +1,1 @@
+ALTER TABLE "chance_user" ADD COLUMN "password_hash" varchar(255);

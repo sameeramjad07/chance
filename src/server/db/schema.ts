@@ -14,7 +14,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { type AdapterAccount } from "next-auth/adapters";
 import { createInsertSchema } from "drizzle-zod";
-import { z } from "zod";
+import { z, ZodType } from "zod";
 
 /**
  * Multi-project schema with `chance_` prefix.
@@ -40,6 +40,7 @@ export const users = createTable(
       .primaryKey()
       .$defaultFn(() => sql`gen_random_uuid()`),
     email: varchar("email", { length: 255 }).notNull().unique(),
+    passwordHash: varchar("password_hash", { length: 255 }),
     firstName: varchar("first_name", { length: 255 }),
     lastName: varchar("last_name", { length: 255 }),
     username: varchar("username", { length: 255 }).unique(),
@@ -81,8 +82,6 @@ export const usersRelations = relations(users, ({ many }) => ({
   spotlight: many(spotlight),
   sharingLogs: many(sharingLogs),
 }));
-
-export type User = InferSelectModel<typeof users>;
 
 // NextAuth tables
 export const accounts = createTable(
@@ -204,8 +203,6 @@ export const projectsRelations = relations(projects, ({ one, many }) => ({
   completions: many(projectsCompleted),
 }));
 
-export type Project = InferSelectModel<typeof projects>;
-
 // Project Members (from your schema)
 export const projectMembers = createTable(
   "project_member",
@@ -306,8 +303,6 @@ export const heartbeatsRelations = relations(heartbeats, ({ one, many }) => ({
   comments: many(heartbeatComments),
 }));
 
-export type Heartbeat = InferSelectModel<typeof heartbeats>;
-
 // Heartbeat Likes (client's schema)
 export const heartbeatLikes = createTable(
   "heartbeat_like",
@@ -384,8 +379,6 @@ export const heartbeatCommentsRelations = relations(
     }),
   }),
 );
-
-export type HeartbeatComment = InferSelectModel<typeof heartbeatComments>;
 
 // Projects Completed (client's schema)
 export const projectsCompleted = createTable(
@@ -540,7 +533,6 @@ export const insertSpotlightSchema = createInsertSchema(spotlight).omit({
   id: true,
   createdAt: true,
 });
-
 export const insertSharingLogSchema = createInsertSchema(sharingLogs).omit({
   id: true,
   createdAt: true,

@@ -35,7 +35,7 @@ import {
   Eye,
   BarChart3,
 } from "lucide-react";
-import { UserProfileModal } from "../modals/user-profile-modal";
+import { UserProfileModal } from "@/app/components/modals/user-profile-modal";
 
 // Mock data with enhanced user information
 const mockLeaderboardData = {
@@ -230,24 +230,26 @@ export function SpotlightTab() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 px-4 md:space-y-6 md:px-0">
       {/* Header */}
-      <div className="space-y-4 text-center">
+      <div className="space-y-2 text-center md:space-y-4">
         <div className="flex items-center justify-center gap-2">
-          <Trophy className="text-primary h-8 w-8" />
-          <h1 className="text-3xl font-bold">Community Spotlight</h1>
+          <Trophy className="text-primary h-6 w-6 md:h-8 md:w-8" />
+          <h1 className="text-2xl font-bold md:text-3xl">
+            Community Spotlight
+          </h1>
         </div>
-        <p className="text-muted-foreground mx-auto max-w-2xl">
+        <p className="text-muted-foreground mx-auto max-w-2xl px-4 text-sm md:px-0 md:text-base">
           Celebrating our most influential contributors who drive innovation and
           collaboration across the platform.
         </p>
       </div>
 
       {/* Filters */}
-      <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
-        <div className="flex gap-3">
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between md:gap-4">
+        <div className="flex gap-2 md:gap-3">
           <Select value={timeframe} onValueChange={setTimeframe}>
-            <SelectTrigger className="w-[140px]">
+            <SelectTrigger className="h-10 flex-1 md:h-9 md:w-[140px]">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -258,7 +260,7 @@ export function SpotlightTab() {
           </Select>
 
           <Select value={category} onValueChange={setCategory}>
-            <SelectTrigger className="w-[140px]">
+            <SelectTrigger className="h-10 flex-1 md:h-9 md:w-[140px]">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -270,73 +272,85 @@ export function SpotlightTab() {
           </Select>
         </div>
 
-        <Badge variant="secondary" className="flex items-center gap-1">
+        <Badge
+          variant="secondary"
+          className="flex items-center justify-center gap-1 md:justify-start"
+        >
           <Flame className="h-4 w-4" />
           Live Rankings
         </Badge>
       </div>
 
       <Tabs defaultValue="leaderboard" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="leaderboard">Leaderboard</TabsTrigger>
-          <TabsTrigger value="achievements">Achievements</TabsTrigger>
-          <TabsTrigger value="analytics">Analytics</TabsTrigger>
+        <TabsList className="grid h-10 w-full grid-cols-3 md:h-9">
+          <TabsTrigger value="leaderboard" className="text-xs md:text-sm">
+            Leaderboard
+          </TabsTrigger>
+          <TabsTrigger value="achievements" className="text-xs md:text-sm">
+            Achievements
+          </TabsTrigger>
+          <TabsTrigger value="analytics" className="text-xs md:text-sm">
+            Analytics
+          </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="leaderboard" className="space-y-6">
+        <TabsContent
+          value="leaderboard"
+          className="mt-4 space-y-4 md:mt-6 md:space-y-6"
+        >
           {/* Stats Cards */}
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 px-3 pt-3 pb-2 md:px-6 md:pt-6">
+                <CardTitle className="text-xs font-medium md:text-sm">
                   Total Influence
                 </CardTitle>
-                <Zap className="text-muted-foreground h-4 w-4" />
+                <Zap className="text-muted-foreground h-3 w-3 md:h-4 md:w-4" />
               </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">47,892</div>
+              <CardContent className="px-3 pb-3 md:px-6 md:pb-6">
+                <div className="text-lg font-bold md:text-2xl">47,892</div>
                 <p className="text-muted-foreground text-xs">
                   +12% from last week
                 </p>
               </CardContent>
             </Card>
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 px-3 pt-3 pb-2 md:px-6 md:pt-6">
+                <CardTitle className="text-xs font-medium md:text-sm">
                   Active Contributors
                 </CardTitle>
-                <Users className="text-muted-foreground h-4 w-4" />
+                <Users className="text-muted-foreground h-3 w-3 md:h-4 md:w-4" />
               </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">1,247</div>
+              <CardContent className="px-3 pb-3 md:px-6 md:pb-6">
+                <div className="text-lg font-bold md:text-2xl">1,247</div>
                 <p className="text-muted-foreground text-xs">
                   +8% from last week
                 </p>
               </CardContent>
             </Card>
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 px-3 pt-3 pb-2 md:px-6 md:pt-6">
+                <CardTitle className="text-xs font-medium md:text-sm">
                   Projects Completed
                 </CardTitle>
-                <Star className="text-muted-foreground h-4 w-4" />
+                <Star className="text-muted-foreground h-3 w-3 md:h-4 md:w-4" />
               </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">342</div>
+              <CardContent className="px-3 pb-3 md:px-6 md:pb-6">
+                <div className="text-lg font-bold md:text-2xl">342</div>
                 <p className="text-muted-foreground text-xs">
                   +23% from last week
                 </p>
               </CardContent>
             </Card>
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 px-3 pt-3 pb-2 md:px-6 md:pt-6">
+                <CardTitle className="text-xs font-medium md:text-sm">
                   New Achievements
                 </CardTitle>
-                <Award className="text-muted-foreground h-4 w-4" />
+                <Award className="text-muted-foreground h-3 w-3 md:h-4 md:w-4" />
               </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">89</div>
+              <CardContent className="px-3 pb-3 md:px-6 md:pb-6">
+                <div className="text-lg font-bold md:text-2xl">89</div>
                 <p className="text-muted-foreground text-xs">This week</p>
               </CardContent>
             </Card>
@@ -344,15 +358,17 @@ export function SpotlightTab() {
 
           {/* Top 3 Podium */}
           <Card>
-            <CardHeader>
-              <CardTitle className="text-center">Top Contributors</CardTitle>
+            <CardHeader className="px-4 md:px-6">
+              <CardTitle className="text-center text-lg md:text-xl">
+                Top Contributors
+              </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="mb-8 flex items-end justify-center gap-8">
+            <CardContent className="px-4 md:px-6">
+              <div className="mb-6 flex items-end justify-center gap-4 md:mb-8 md:gap-8">
                 {/* 2nd Place */}
                 <div className="text-center">
-                  <div className="relative mb-4">
-                    <Avatar className="mx-auto h-16 w-16 border-4 border-gray-400">
+                  <div className="relative mb-3 md:mb-4">
+                    <Avatar className="mx-auto h-12 w-12 border-2 border-gray-400 md:h-16 md:w-16 md:border-4">
                       <AvatarImage
                         src={
                           currentLeaderboard[1]?.user.avatar ||
@@ -363,11 +379,11 @@ export function SpotlightTab() {
                         {currentLeaderboard[1]?.user.name[0]}
                       </AvatarFallback>
                     </Avatar>
-                    <div className="absolute -top-2 -right-2 flex h-8 w-8 items-center justify-center rounded-full bg-gray-400 text-sm font-bold text-white">
+                    <div className="absolute -top-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-gray-400 text-xs font-bold text-white md:-top-2 md:-right-2 md:h-8 md:w-8 md:text-sm">
                       2
                     </div>
                   </div>
-                  <p className="text-sm font-semibold">
+                  <p className="text-xs font-semibold md:text-sm">
                     {currentLeaderboard[1]?.user.name}
                   </p>
                   <p className="text-muted-foreground text-xs">
@@ -377,8 +393,8 @@ export function SpotlightTab() {
 
                 {/* 1st Place */}
                 <div className="text-center">
-                  <div className="relative mb-4">
-                    <Avatar className="mx-auto h-20 w-20 border-4 border-yellow-500">
+                  <div className="relative mb-3 md:mb-4">
+                    <Avatar className="mx-auto h-16 w-16 border-2 border-yellow-500 md:h-20 md:w-20 md:border-4">
                       <AvatarImage
                         src={
                           currentLeaderboard[0]?.user.avatar ||
@@ -389,25 +405,25 @@ export function SpotlightTab() {
                         {currentLeaderboard[0]?.user.name[0]}
                       </AvatarFallback>
                     </Avatar>
-                    <div className="absolute -top-2 -right-2 flex h-8 w-8 items-center justify-center rounded-full bg-yellow-500 font-bold text-white">
-                      <Crown className="h-4 w-4" />
+                    <div className="absolute -top-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-yellow-500 font-bold text-white md:-top-2 md:-right-2 md:h-8 md:w-8">
+                      <Crown className="h-3 w-3 md:h-4 md:w-4" />
                     </div>
                   </div>
-                  <p className="font-semibold">
+                  <p className="text-sm font-semibold md:text-base">
                     {currentLeaderboard[0]?.user.name}
                   </p>
-                  <p className="text-muted-foreground text-sm">
+                  <p className="text-muted-foreground text-xs md:text-sm">
                     {currentLeaderboard[0]?.influence.toLocaleString()}
                   </p>
-                  <Badge variant="default" className="mt-1">
+                  <Badge variant="default" className="mt-1 text-xs">
                     {currentLeaderboard[0]?.badge}
                   </Badge>
                 </div>
 
                 {/* 3rd Place */}
                 <div className="text-center">
-                  <div className="relative mb-4">
-                    <Avatar className="mx-auto h-16 w-16 border-4 border-amber-600">
+                  <div className="relative mb-3 md:mb-4">
+                    <Avatar className="mx-auto h-12 w-12 border-2 border-amber-600 md:h-16 md:w-16 md:border-4">
                       <AvatarImage
                         src={
                           currentLeaderboard[2]?.user.avatar ||
@@ -418,11 +434,11 @@ export function SpotlightTab() {
                         {currentLeaderboard[2]?.user.name[0]}
                       </AvatarFallback>
                     </Avatar>
-                    <div className="absolute -top-2 -right-2 flex h-8 w-8 items-center justify-center rounded-full bg-amber-600 text-sm font-bold text-white">
+                    <div className="absolute -top-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-amber-600 text-xs font-bold text-white md:-top-2 md:-right-2 md:h-8 md:w-8 md:text-sm">
                       3
                     </div>
                   </div>
-                  <p className="text-sm font-semibold">
+                  <p className="text-xs font-semibold md:text-sm">
                     {currentLeaderboard[2]?.user.name}
                   </p>
                   <p className="text-muted-foreground text-xs">
@@ -435,18 +451,18 @@ export function SpotlightTab() {
 
           {/* Detailed Leaderboard */}
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <BarChart3 className="text-primary h-5 w-5" />
+            <CardHeader className="px-4 md:px-6">
+              <CardTitle className="flex items-center gap-2 text-lg md:text-xl">
+                <BarChart3 className="text-primary h-4 w-4 md:h-5 md:w-5" />
                 Detailed Rankings
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-sm">
                 Complete leaderboard with detailed statistics and progress
                 tracking.
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
+            <CardContent className="px-4 md:px-6">
+              <div className="space-y-3 md:space-y-4">
                 {currentLeaderboard.map((user) => {
                   const rankChange = getRankChange(
                     user.rank,
@@ -455,16 +471,16 @@ export function SpotlightTab() {
                   return (
                     <div
                       key={user.id}
-                      className={`hover:bg-muted/50 flex cursor-pointer items-center justify-between rounded-lg border p-4 transition-colors ${
+                      className={`hover:bg-muted/50 flex cursor-pointer items-center justify-between rounded-lg border p-3 transition-colors md:p-4 ${
                         user.rank <= 3 ? "bg-muted/30" : "bg-card"
                       }`}
                       onClick={() => setSelectedUser(user)}
                     >
-                      <div className="flex items-center gap-4">
+                      <div className="flex min-w-0 flex-1 items-center gap-2 md:gap-4">
                         {/* Rank with change indicator */}
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-shrink-0 items-center gap-1 md:gap-2">
                           <div
-                            className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold ${
+                            className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold md:h-10 md:w-10 md:text-sm ${
                               user.rank === 1
                                 ? "bg-yellow-500 text-white"
                                 : user.rank === 2
@@ -476,36 +492,50 @@ export function SpotlightTab() {
                           >
                             {user.rank}
                           </div>
-                          {getRankIcon(rankChange)}
+                          <div className="hidden md:block">
+                            {getRankIcon(rankChange)}
+                          </div>
                         </div>
 
                         {/* User Info */}
-                        <div className="flex items-center gap-3">
-                          <Avatar className="h-12 w-12">
+                        <div className="flex min-w-0 flex-1 items-center gap-2 md:gap-3">
+                          <Avatar className="h-8 w-8 flex-shrink-0 md:h-12 md:w-12">
                             <AvatarImage
                               src={user.user.avatar || "/placeholder.svg"}
                             />
                             <AvatarFallback>{user.user.name[0]}</AvatarFallback>
                           </Avatar>
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <p className="font-semibold">{user.user.name}</p>
-                              <Badge variant="secondary" className="text-xs">
+                          <div className="min-w-0 flex-1">
+                            <div className="flex flex-wrap items-center gap-1 md:gap-2">
+                              <p className="truncate text-sm font-semibold md:text-base">
+                                {user.user.name}
+                              </p>
+                              <Badge
+                                variant="secondary"
+                                className="flex-shrink-0 text-xs"
+                              >
                                 Level {user.level}
                               </Badge>
-                              <Badge variant="outline" className="text-xs">
+                              <Badge
+                                variant="outline"
+                                className="hidden text-xs md:inline-flex"
+                              >
                                 {user.badge}
                               </Badge>
                             </div>
-                            <p className="text-muted-foreground text-sm">
+                            <p className="text-muted-foreground truncate text-xs md:text-sm">
                               {user.user.username}
                             </p>
-                            <div className="text-muted-foreground mt-1 flex items-center gap-4 text-xs">
-                              <span>{user.projectsCompleted} projects</span>
-                              <span>{user.heartbeats} heartbeats</span>
+                            <div className="text-muted-foreground mt-1 flex items-center gap-2 text-xs md:gap-4">
+                              <span className="hidden md:inline">
+                                {user.projectsCompleted} projects
+                              </span>
+                              <span className="hidden md:inline">
+                                {user.heartbeats} heartbeats
+                              </span>
                               <span className="flex items-center gap-1">
                                 <Flame className="h-3 w-3" />
-                                {user.streak} day streak
+                                {user.streak}d
                               </span>
                             </div>
                           </div>
@@ -513,25 +543,25 @@ export function SpotlightTab() {
                       </div>
 
                       {/* Stats and Progress */}
-                      <div className="space-y-2 text-right">
-                        <div className="flex items-center gap-2">
-                          <span className="text-primary text-lg font-bold">
+                      <div className="flex-shrink-0 space-y-1 text-right md:space-y-2">
+                        <div className="flex items-center justify-end gap-1 md:gap-2">
+                          <span className="text-primary text-sm font-bold md:text-lg">
                             {user.influence.toLocaleString()}
                           </span>
-                          <span className="text-muted-foreground text-sm">
-                            influence
+                        </div>
+                        <div className="flex items-center justify-end gap-1 text-xs text-green-600">
+                          <TrendingUp className="h-3 w-3" />
+                          <span className="hidden md:inline">
+                            +{user.weeklyGain}
                           </span>
+                          <span className="md:hidden">+{user.weeklyGain}</span>
                         </div>
-                        <div className="flex items-center gap-1 text-xs text-green-600">
-                          <TrendingUp className="h-3 w-3" />+{user.weeklyGain}{" "}
-                          this week
-                        </div>
-                        <div className="w-24">
+                        <div className="w-16 md:w-24">
                           <Progress
                             value={user.nextLevelProgress}
-                            className="h-2"
+                            className="h-1 md:h-2"
                           />
-                          <p className="text-muted-foreground mt-1 text-xs">
+                          <p className="text-muted-foreground mt-1 hidden text-xs md:block">
                             Level {user.level + 1}
                           </p>
                         </div>
@@ -544,20 +574,23 @@ export function SpotlightTab() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="achievements" className="space-y-6">
+        <TabsContent
+          value="achievements"
+          className="mt-4 space-y-4 md:mt-6 md:space-y-6"
+        >
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Award className="text-primary h-5 w-5" />
+            <CardHeader className="px-4 md:px-6">
+              <CardTitle className="flex items-center gap-2 text-lg md:text-xl">
+                <Award className="text-primary h-4 w-4 md:h-5 md:w-5" />
                 Achievement System
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-sm">
                 Unlock badges and achievements by contributing to projects and
                 engaging with the community.
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <CardContent className="px-4 md:px-6">
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4 lg:grid-cols-3">
                 {achievements.map((achievement) => {
                   const Icon = achievement.icon;
                   return (
@@ -565,18 +598,20 @@ export function SpotlightTab() {
                       key={achievement.name}
                       className="transition-shadow hover:shadow-md"
                     >
-                      <CardContent className="pt-6">
-                        <div className="space-y-3 text-center">
+                      <CardContent className="px-4 pt-4 md:px-6 md:pt-6">
+                        <div className="space-y-2 text-center md:space-y-3">
                           <div
-                            className={`bg-muted mx-auto flex h-12 w-12 items-center justify-center rounded-full`}
+                            className={`bg-muted mx-auto flex h-10 w-10 items-center justify-center rounded-full md:h-12 md:w-12`}
                           >
-                            <Icon className={`h-6 w-6 ${achievement.color}`} />
+                            <Icon
+                              className={`h-5 w-5 md:h-6 md:w-6 ${achievement.color}`}
+                            />
                           </div>
                           <div>
-                            <h3 className="font-semibold">
+                            <h3 className="text-sm font-semibold md:text-base">
                               {achievement.name}
                             </h3>
-                            <p className="text-muted-foreground text-sm">
+                            <p className="text-muted-foreground text-xs md:text-sm">
                               {achievement.description}
                             </p>
                           </div>
@@ -594,14 +629,19 @@ export function SpotlightTab() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="analytics" className="space-y-6">
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+        <TabsContent
+          value="analytics"
+          className="mt-4 space-y-4 md:mt-6 md:space-y-6"
+        >
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6">
             <Card>
-              <CardHeader>
-                <CardTitle>Influence Distribution</CardTitle>
+              <CardHeader className="px-4 md:px-6">
+                <CardTitle className="text-lg md:text-xl">
+                  Influence Distribution
+                </CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
+              <CardContent className="px-4 md:px-6">
+                <div className="space-y-3 md:space-y-4">
                   <div className="flex items-center justify-between">
                     <span className="text-sm">Top 1%</span>
                     <span className="text-sm font-semibold">
@@ -628,11 +668,13 @@ export function SpotlightTab() {
             </Card>
 
             <Card>
-              <CardHeader>
-                <CardTitle>Weekly Trends</CardTitle>
+              <CardHeader className="px-4 md:px-6">
+                <CardTitle className="text-lg md:text-xl">
+                  Weekly Trends
+                </CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
+              <CardContent className="px-4 md:px-6">
+                <div className="space-y-3 md:space-y-4">
                   <div className="flex items-center justify-between">
                     <span className="text-sm">New Contributors</span>
                     <span className="text-sm font-semibold text-green-600">
@@ -666,15 +708,15 @@ export function SpotlightTab() {
 
       {/* Call to Action */}
       <Card className="text-center">
-        <CardContent className="pt-6">
+        <CardContent className="px-4 pt-4 md:px-6 md:pt-6">
           <h3 className="mb-2 text-lg font-semibold">
             Ready to Climb the Rankings?
           </h3>
-          <p className="text-muted-foreground mb-4">
+          <p className="text-muted-foreground mb-4 text-sm md:text-base">
             Start contributing to projects, create your own, and build your
             influence in the community.
           </p>
-          <Button>
+          <Button className="w-full md:w-auto">
             <Eye className="mr-2 h-4 w-4" />
             View My Profile
           </Button>

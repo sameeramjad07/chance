@@ -8,6 +8,13 @@
       "when": 1757439020180,
       "tag": "0000_tough_agent_brand",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1757532897996,
+      "tag": "0001_lucky_agent_brand",
+      "breakpoints": true
     }
   ]
 }
