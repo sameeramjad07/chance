@@ -9,4 +9,5 @@ export default {
     url: env.DATABASE_URL,
   },
   tablesFilter: ["chance_*"],
+  out: "./drizzle/migrations",
 } satisfies Config;

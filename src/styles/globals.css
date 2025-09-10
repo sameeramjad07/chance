@@ -1,6 +1,191 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
 
 @theme {
-  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif,
+  --font-sans:
+    var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif,
     "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+}
+
+:root {
+  /* Updated design tokens for modern Awwwards-style aesthetic */
+  --background: #ffffff; /* Clean white main background */
+  --foreground: #1f2937; /* Deep gray primary text */
+  --card: #f8fafc; /* Soft off-white card background */
+  --card-foreground: #1f2937; /* Dark text in cards */
+  --popover: #ffffff; /* White popovers */
+  --popover-foreground: #1f2937; /* Dark text in popovers */
+  --primary: #374151; /* Sophisticated gray-700 primary */
+  --primary-foreground: #ffffff; /* White text on primary */
+  --secondary: #6366f1; /* Vibrant indigo accent */
+  --secondary-foreground: #ffffff; /* White text on secondary */
+  --muted: #f8fafc; /* Soft muted background */
+  --muted-foreground: #6b7280; /* Muted gray text */
+  --accent: #6366f1; /* Vibrant indigo for highlights */
+  --accent-foreground: #ffffff; /* White text on accent */
+  --destructive: #be123c; /* Modern red for errors */
+  --destructive-foreground: #ffffff; /* White text on destructive */
+  --border: #d1d5db; /* Light gray borders */
+  --input: #f8fafc; /* Soft input backgrounds */
+  --ring: rgba(99, 102, 241, 0.5); /* Indigo focus ring */
+  --chart-1: #6366f1; /* Indigo chart color */
+  --chart-2: #d97706; /* Orange chart color */
+  --chart-3: #be123c; /* Red chart color */
+  --chart-4: #10b981; /* Green chart color */
+  --chart-5: #f59e0b; /* Yellow chart color */
+  --radius: 0.75rem; /* Modern rounded corners */
+  --sidebar: #374151; /* Dark sidebar background */
+  --sidebar-foreground: #ffffff; /* White sidebar text */
+  --sidebar-primary: #6366f1; /* Indigo sidebar primary */
+  --sidebar-primary-foreground: #ffffff; /* White text on sidebar primary */
+  --sidebar-accent: #d97706; /* Orange sidebar accent */
+  --sidebar-accent-foreground: #ffffff; /* White text on sidebar accent */
+  --sidebar-border: #d1d5db; /* Light sidebar border */
+  --sidebar-ring: rgba(99, 102, 241, 0.5); /* Indigo sidebar focus ring */
+}
+
+.dark {
+  --background: #0f172a; /* Deep dark background */
+  --foreground: #f1f5f9; /* Light text */
+  --card: #1e293b; /* Dark cards */
+  --card-foreground: #f1f5f9; /* Light text in cards */
+  --popover: #1e293b; /* Dark popovers */
+  --popover-foreground: #f1f5f9; /* Light text in popovers */
+  --primary: #6366f1; /* Brighter indigo in dark mode */
+  --primary-foreground: #ffffff; /* White text on primary */
+  --secondary: #334155; /* Dark secondary */
+  --secondary-foreground: #f1f5f9; /* Light text on secondary */
+  --muted: #1e293b; /* Dark muted background */
+  --muted-foreground: #94a3b8; /* Muted light text */
+  --accent: #6366f1; /* Indigo accent */
+  --accent-foreground: #ffffff; /* White text on accent */
+  --destructive: #ef4444; /* Brighter red in dark mode */
+  --destructive-foreground: #ffffff; /* White text on destructive */
+  --border: #334155; /* Dark border */
+  --input: #1e293b; /* Dark input backgrounds */
+  --ring: rgba(99, 102, 241, 0.5); /* Indigo focus ring */
+  --chart-1: #6366f1; /* Indigo chart color */
+  --chart-2: #f97316; /* Orange chart color */
+  --chart-3: #ef4444; /* Red chart color */
+  --chart-4: #22c55e; /* Green chart color */
+  --chart-5: #eab308; /* Yellow chart color */
+  --sidebar: #0f172a; /* Deep dark sidebar */
+  --sidebar-foreground: #f1f5f9; /* Light sidebar text */
+  --sidebar-primary: #6366f1; /* Indigo sidebar primary */
+  --sidebar-primary-foreground: #ffffff; /* White text on sidebar primary */
+  --sidebar-accent: #334155; /* Dark sidebar accent */
+  --sidebar-accent-foreground: #f1f5f9; /* Light text on sidebar accent */
+  --sidebar-border: #334155; /* Dark sidebar border */
+  --sidebar-ring: rgba(99, 102, 241, 0.5); /* Indigo sidebar focus ring */
+}
+
+@theme inline {
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground font-sans;
+  }
+}
+
+/* Added custom animations and modern effects */
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes pulse-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 20px rgba(99, 102, 241, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(99, 102, 241, 0.6);
+  }
+}
+
+@keyframes gradient-shift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 3s ease-in-out infinite;
+}
+
+.animate-gradient {
+  background-size: 200% 200%;
+  animation: gradient-shift 8s ease infinite;
+}
+
+.glass-effect {
+  backdrop-filter: blur(20px);
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.text-gradient {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6, #a855f7);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }

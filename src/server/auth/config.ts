@@ -1,6 +1,6 @@
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import { type DefaultSession, type NextAuthConfig } from "next-auth";
-import DiscordProvider from "next-auth/providers/discord";
+import GoogleProvider from "next-auth/providers/google";
 
 import { db } from "@/server/db";
 import {
@@ -20,15 +20,19 @@ declare module "next-auth" {
   interface Session extends DefaultSession {
     user: {
       id: string;
+      role?: "user" | "admin";
+      isVerified?: boolean;
       // ...other properties
       // role: UserRole;
     } & DefaultSession["user"];
   }
+}
 
-  // interface User {
-  //   // ...other properties
-  //   // role: UserRole;
-  // }
+// Augment AdapterUser to include custom fields (fixes the role missing error)
+declare module "@auth/core/adapters" {
+  interface AdapterUser {
+    role?: "user" | "admin";
+  }
 }
 
 /**
@@ -36,9 +40,12 @@ declare module "next-auth" {
  *
  * @see https://next-auth.js.org/configuration/options
  */
-export const authConfig = {
+export const authConfig: NextAuthConfig = {
   providers: [
-    DiscordProvider,
+    DiscordProvider({
+      clientId: process.env.DISCORD_CLIENT_ID!,
+      clientSecret: process.env.DISCORD_CLIENT_SECRET!,
+    }),
     /**
      * ...add more providers here.
      *
@@ -56,12 +63,18 @@ export const authConfig = {
     verificationTokensTable: verificationTokens,
   }),
   callbacks: {
-    session: ({ session, user }) => ({
-      ...session,
-      user: {
-        ...session.user,
-        id: user.id,
-      },
-    }),
+    session: ({ session, user }) => {
+      if (session.user && user) {
+        session.user.id = user.id;
+        session.user.role = (user as any).role || "user"; // Cast if needed; role is now in AdapterUser
+      }
+      return session;
+    },
+    jwt: ({ token, user }) => {
+      if (user) {
+        token.role = (user as any).role || "user";
+      }
+      return token;
+    },
   },
-} satisfies NextAuthConfig;
+};
