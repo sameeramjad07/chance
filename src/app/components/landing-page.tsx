@@ -13,7 +13,6 @@ import {
   Sparkles,
   Globe,
   Target,
-  ChevronDown,
   Calendar,
   ExternalLink,
 } from "lucide-react";

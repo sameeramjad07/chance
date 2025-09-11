@@ -4,6 +4,7 @@ import { type Metadata } from "next";
 import { Geist } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import { TRPCReactProvider } from "@/trpc/react";
+import { SessionProvider } from "next-auth/react";
 
 export const metadata: Metadata = {
   title: "Chance - Connect, Create, Collaborate",
@@ -23,8 +24,12 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${geist.variable}`}>
       <body>
-        <TRPCReactProvider>{children}</TRPCReactProvider>
-        <Toaster richColors />
+        <SessionProvider>
+          <TRPCReactProvider>
+            {children}
+            <Toaster richColors />
+          </TRPCReactProvider>
+        </SessionProvider>
       </body>
     </html>
   );

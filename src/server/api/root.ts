@@ -3,7 +3,7 @@ import { createCallerFactory, createTRPCRouter } from "@/server/api/trpc";
 // import { adminRouter } from "./routers/admin";
 // import { heartbeatRouter } from "./routers/heartbeat";
 // import { spotlightRouter } from "./routers/spotlight";
-// import { projectRouter } from "./routers/project";
+import { projectRouter } from "./routers/project";
 import { userRouter } from "./routers/user";
 
 /**
@@ -16,7 +16,7 @@ export const appRouter = createTRPCRouter({
   // admin: adminRouter,
   // heartbeat: heartbeatRouter,
   // spotlight: spotlightRouter,
-  // project: projectRouter,
+  project: projectRouter,
   user: userRouter,
 });
 

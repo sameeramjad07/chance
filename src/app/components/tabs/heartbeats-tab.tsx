@@ -289,7 +289,7 @@ export function HeartbeatsTab() {
               <div className="flex min-w-0 flex-1 items-center gap-3">
                 <Avatar className="h-8 w-8 flex-shrink-0 md:h-10 md:w-10">
                   <AvatarImage
-                    src={heartbeat.user.avatar || "/placeholder.svg"}
+                    src={heartbeat.user.avatar ?? "/placeholder.svg"}
                   />
                   <AvatarFallback>{heartbeat.user.name[0]}</AvatarFallback>
                 </Avatar>
@@ -386,7 +386,7 @@ export function HeartbeatsTab() {
                 <div className="overflow-hidden rounded-lg">
                   {heartbeat.images.length === 1 ? (
                     <img
-                      src={heartbeat.images[0] || "/placeholder.svg"}
+                      src={heartbeat.images[0] ?? "/placeholder.svg"}
                       alt="Heartbeat content"
                       className="h-auto max-h-80 w-full cursor-pointer object-cover transition-opacity hover:opacity-95 md:max-h-96"
                     />
@@ -395,7 +395,7 @@ export function HeartbeatsTab() {
                       {heartbeat.images.slice(0, 4).map((image, index) => (
                         <div key={index} className="relative">
                           <img
-                            src={image || "/placeholder.svg"}
+                            src={image ?? "/placeholder.svg"}
                             alt={`Heartbeat content ${index + 1}`}
                             className="h-24 w-full cursor-pointer object-cover transition-opacity hover:opacity-95 md:h-32"
                           />

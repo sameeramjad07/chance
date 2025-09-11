@@ -165,7 +165,7 @@ export function CommentsModal({
     >
       <div className="flex gap-3">
         <Avatar className="h-8 w-8">
-          <AvatarImage src={comment.user.avatar || "/placeholder.svg"} />
+          <AvatarImage src={comment.user.avatar ?? "/placeholder.svg"} />
           <AvatarFallback>{comment.user.name[0]}</AvatarFallback>
         </Avatar>
         <div className="flex-1 space-y-2">
@@ -297,7 +297,7 @@ export function CommentsModal({
             <div className="mb-3 flex items-center gap-3">
               <Avatar className="h-8 w-8">
                 <AvatarImage
-                  src={heartbeat.user.avatar || "/placeholder.svg"}
+                  src={heartbeat.user.avatar ?? "/placeholder.svg"}
                 />
                 <AvatarFallback>{heartbeat.user.name[0]}</AvatarFallback>
               </Avatar>
@@ -311,7 +311,7 @@ export function CommentsModal({
             <p className="mb-3 text-sm">{heartbeat.content}</p>
             {heartbeat.images && heartbeat.images.length > 0 && (
               <img
-                src={heartbeat.images[0] || "/placeholder.svg"}
+                src={heartbeat.images[0] ?? "/placeholder.svg"}
                 alt="Post content"
                 className="mb-3 h-32 w-full rounded-lg object-cover"
               />

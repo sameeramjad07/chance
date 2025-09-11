@@ -12,8 +12,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { Eye, EyeOff, ArrowLeft, Zap, Mail } from "lucide-react";
+import { Eye, EyeOff, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { z } from "zod";
 import { toast } from "sonner";
@@ -86,22 +85,6 @@ export function SignUpForm() {
     }
   };
 
-  const handleGoogleSignUp = async () => {
-    try {
-      const result = await signIn("google", {
-        callbackUrl: "/dashboard",
-        redirect: false,
-      });
-      if (result?.error) {
-        toast.error(`Error: ${result.error}`);
-      } else if (result?.url) {
-        router.push(result.url);
-      }
-    } catch (error) {
-      toast.error("Error: Failed to sign up with Google");
-    }
-  };
-
   return (
     <div className="bg-background relative flex min-h-screen items-center justify-center overflow-hidden p-4">
       <div className="pointer-events-none absolute inset-0 flex items-center justify-center select-none">
@@ -127,10 +110,7 @@ export function SignUpForm() {
       <Card className="border-border/50 bg-card/80 relative z-10 w-full max-w-md shadow-2xl backdrop-blur-xl">
         <CardHeader className="space-y-4 text-center">
           <div className="mb-2 flex items-center justify-center gap-3">
-            <div className="from-accent to-accent/80 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br">
-              <Zap className="h-6 w-6 text-white" />
-            </div>
-            <span className="text-gradient text-3xl font-bold">Chance</span>
+            <span className="text-gradient text-4xl font-bold">CHANCE</span>
           </div>
           <CardTitle className="text-foreground text-2xl font-bold">
             Create your account
@@ -140,27 +120,6 @@ export function SignUpForm() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="grid grid-cols-1 gap-4">
-            <Button
-              variant="outline"
-              className="border-border/50 hover:border-accent/30 w-full bg-transparent"
-              onClick={handleGoogleSignUp}
-              disabled={signupMutation.status === "pending"}
-            >
-              <Mail className="mr-2 h-4 w-4" />
-              Sign up with Google
-            </Button>
-          </div>
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <Separator className="w-full" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-card text-muted-foreground px-2">
-                Or create with email
-              </span>
-            </div>
-          </div>
           <form className="space-y-4" onSubmit={handleSubmit}>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">

@@ -6,15 +6,13 @@ import {
   pgEnum,
   varchar,
   text,
-  serial,
   integer,
   timestamp,
   boolean,
-  jsonb,
 } from "drizzle-orm/pg-core";
 import { type AdapterAccount } from "next-auth/adapters";
 import { createInsertSchema } from "drizzle-zod";
-import { z, ZodType } from "zod";
+import type { z } from "zod";
 
 /**
  * Multi-project schema with `chance_` prefix.
@@ -40,6 +38,8 @@ export const users = createTable(
       .primaryKey()
       .$defaultFn(() => sql`gen_random_uuid()`),
     email: varchar("email", { length: 255 }).notNull().unique(),
+    name: varchar("name", { length: 255 }), // Added for NextAuth compatibility
+    image: varchar("image", { length: 255 }), // Added for NextAuth compatibility
     passwordHash: varchar("password_hash", { length: 255 }),
     firstName: varchar("first_name", { length: 255 }),
     lastName: varchar("last_name", { length: 255 }),

@@ -371,7 +371,7 @@ export function SpotlightTab() {
                     <Avatar className="mx-auto h-12 w-12 border-2 border-gray-400 md:h-16 md:w-16 md:border-4">
                       <AvatarImage
                         src={
-                          currentLeaderboard[1]?.user.avatar ||
+                          currentLeaderboard[1]?.user.avatar ??
                           "/placeholder.svg"
                         }
                       />
@@ -397,7 +397,7 @@ export function SpotlightTab() {
                     <Avatar className="mx-auto h-16 w-16 border-2 border-yellow-500 md:h-20 md:w-20 md:border-4">
                       <AvatarImage
                         src={
-                          currentLeaderboard[0]?.user.avatar ||
+                          currentLeaderboard[0]?.user.avatar ??
                           "/placeholder.svg"
                         }
                       />
@@ -426,7 +426,7 @@ export function SpotlightTab() {
                     <Avatar className="mx-auto h-12 w-12 border-2 border-amber-600 md:h-16 md:w-16 md:border-4">
                       <AvatarImage
                         src={
-                          currentLeaderboard[2]?.user.avatar ||
+                          currentLeaderboard[2]?.user.avatar ??
                           "/placeholder.svg"
                         }
                       />
@@ -501,7 +501,7 @@ export function SpotlightTab() {
                         <div className="flex min-w-0 flex-1 items-center gap-2 md:gap-3">
                           <Avatar className="h-8 w-8 flex-shrink-0 md:h-12 md:w-12">
                             <AvatarImage
-                              src={user.user.avatar || "/placeholder.svg"}
+                              src={user.user.avatar ?? "/placeholder.svg"}
                             />
                             <AvatarFallback>{user.user.name[0]}</AvatarFallback>
                           </Avatar>

@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { useSession, signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import Link from "next/link";
 import {
   Zap,
   Plus,
@@ -13,6 +15,7 @@ import {
   Bell,
   Search,
   Filter,
+  LogOut,
 } from "lucide-react";
 import { ProjectsTab } from "@/app/components/tabs/projects-tab";
 import { HeartbeatsTab } from "@/app/components/tabs/heartbeats-tab";
@@ -24,12 +27,23 @@ type TabType = "projects" | "heartbeats" | "spotlight";
 export function AuthenticatedApp() {
   const [activeTab, setActiveTab] = useState<TabType>("projects");
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const { data: session, status } = useSession(); // Get session data
 
   const tabs = [
     { id: "projects" as TabType, label: "Projects", icon: Rocket },
     { id: "heartbeats" as TabType, label: "Heartbeats", icon: Heart },
     { id: "spotlight" as TabType, label: "Spotlight", icon: Trophy },
   ];
+
+  // Function to handle sign-out
+  const handleSignOut = async () => {
+    await signOut({ callbackUrl: "/signin" });
+  };
+
+  // Fallback for loading state
+  if (status === "loading") {
+    return <div>Loading...</div>;
+  }
 
   return (
     <div className="bg-background min-h-screen">
@@ -66,17 +80,37 @@ export function AuthenticatedApp() {
               >
                 <Bell className="h-4 w-4" />
               </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                className="hidden bg-transparent sm:flex"
-              >
-                <Settings className="h-4 w-4" />
-              </Button>
-              <Avatar className="h-8 w-8">
-                <AvatarImage src="/diverse-user-avatars.png" />
-                <AvatarFallback>JD</AvatarFallback>
-              </Avatar>
+              <Link href="/profile">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="hidden cursor-pointer bg-transparent sm:flex"
+                >
+                  <Settings className="h-4 w-4" />
+                </Button>
+              </Link>
+              <div className="relative flex items-center gap-2">
+                <Avatar className="h-8 w-8">
+                  <AvatarImage
+                    src={session?.user?.image ?? "/diverse-user-avatars.png"}
+                  />
+                  <AvatarFallback>
+                    {session?.user?.name?.slice(0, 2).toUpperCase() ?? "JD"}
+                  </AvatarFallback>
+                </Avatar>
+                <span className="text-foreground hidden text-sm sm:inline">
+                  {session?.user?.name ?? "User"}
+                </span>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="bg-transparent"
+                  onClick={handleSignOut}
+                  title="Sign out"
+                >
+                  <LogOut className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
           </div>
 
@@ -133,13 +167,21 @@ export function AuthenticatedApp() {
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-6 pb-24 md:pb-6">
-        {activeTab === "projects" && <ProjectsTab />}
+        {activeTab === "projects" && (
+          <ProjectsTab onCreate={() => setShowCreateModal(true)} />
+        )}
         {activeTab === "heartbeats" && <HeartbeatsTab />}
         {activeTab === "spotlight" && <SpotlightTab />}
       </main>
 
       {/* Create Modal */}
-      <CreateModal open={showCreateModal} onOpenChange={setShowCreateModal} />
+      <CreateModal
+        open={showCreateModal}
+        onOpenChange={setShowCreateModal}
+        onCreate={() => {
+          // Optional: refetch or trigger update here if needed globally
+        }}
+      />
 
       <div className="bg-card/95 border-border fixed right-0 bottom-0 left-0 z-50 border-t backdrop-blur-sm md:hidden">
         <div className="grid grid-cols-4 gap-1 p-2">
