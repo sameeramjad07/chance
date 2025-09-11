@@ -77,6 +77,9 @@
     "typescript": "^5.8.2",
     "typescript-eslint": "^8.27.0"
   },
+  "overrides": {
+    "zod": "^4.1.7"
+  },
   "ct3aMetadata": {
     "initVersion": "7.39.3"
   },
