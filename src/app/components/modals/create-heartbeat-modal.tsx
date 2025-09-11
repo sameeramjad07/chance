@@ -120,7 +120,7 @@ export function CreateHeartbeatModal({
 
           {/* Content */}
           <div className="space-y-2">
-            <Label htmlFor="heartbeat-content">What's happening?</Label>
+            <Label htmlFor="heartbeat-content">What&apos;s happening?</Label>
             <Textarea
               id="heartbeat-content"
               placeholder="Share your thoughts, progress, or ask the community for help..."

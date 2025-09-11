@@ -5,9 +5,15 @@ import { env } from "@/env";
 import { db } from "./index";
 
 async function main() {
-  const migrationClient = postgres(env.DATABASE_URL!);
+  if (!env.DATABASE_URL) {
+    throw new Error("DATABASE_URL is not set");
+  }
+  const migrationClient = postgres(env.DATABASE_URL);
   await migrate(db, { migrationsFolder: "./drizzle/migrations" });
   await migrationClient.end();
 }
 
-main();
+main().catch((err) => {
+  console.error("Migration failed:", err);
+  process.exit(1);
+});

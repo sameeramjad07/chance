@@ -14,8 +14,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { Eye, EyeOff, ArrowLeft, Zap, Mail } from "lucide-react";
+import { Eye, EyeOff, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 
@@ -25,25 +24,6 @@ export function SignInForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-
-  const handleGoogleSignIn = async () => {
-    try {
-      setIsLoading(true);
-      const result = await signIn("google", {
-        callbackUrl: "/dashboard",
-        redirect: false,
-      });
-      if (result?.error) {
-        toast(`Error: ${result.error}`);
-      } else if (result?.url) {
-        router.push(result.url);
-      }
-    } catch (error) {
-      toast("Error: Failed to sign in with Google");
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -95,10 +75,7 @@ export function SignInForm() {
       <Card className="border-border/50 bg-card/80 relative z-10 w-full max-w-md shadow-2xl backdrop-blur-xl">
         <CardHeader className="space-y-4 text-center">
           <div className="mb-2 flex items-center justify-center gap-3">
-            <div className="from-accent to-accent/80 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br">
-              <Zap className="h-6 w-6 text-white" />
-            </div>
-            <span className="text-gradient text-3xl font-bold">Chance</span>
+            <span className="text-gradient text-4xl font-bold">CHANCE</span>
           </div>
           <CardTitle className="text-foreground text-2xl font-bold">
             Welcome back
@@ -109,29 +86,6 @@ export function SignInForm() {
         </CardHeader>
 
         <CardContent className="space-y-6">
-          <div className="grid grid-cols-1 gap-4">
-            <Button
-              variant="outline"
-              className="border-border/50 hover:border-accent/30 w-full bg-transparent"
-              onClick={handleGoogleSignIn}
-              disabled={isLoading}
-            >
-              <Mail className="mr-2 h-4 w-4" />
-              Sign in with Google
-            </Button>
-          </div>
-
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <Separator className="w-full" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-card text-muted-foreground px-2">
-                Or continue with email
-              </span>
-            </div>
-          </div>
-
           <form className="space-y-4" onSubmit={handleSubmit}>
             <div className="space-y-2">
               <Label

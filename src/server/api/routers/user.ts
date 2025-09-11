@@ -16,7 +16,7 @@ export const userRouter = createTRPCRouter({
   getProfile: protectedProcedure
     .input(z.string().optional()) // Optional userId, defaults to self
     .query(async ({ ctx, input }) => {
-      const userId = input || ctx.session.user.id;
+      const userId = input ?? ctx.session.user.id;
       const [user] = await db
         .select({
           id: users.id,

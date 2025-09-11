@@ -22,15 +22,74 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Rocket, Heart, X, Plus } from "lucide-react";
+import { api } from "@/trpc/react";
+import { toast } from "sonner";
+import { z } from "zod";
+
+const projectSchema = z.object({
+  title: z.string().min(1, "Title is required").max(256),
+  description: z.string().min(1, "Description is required"),
+  category: z.string().min(1, "Category is required").max(100),
+  impact: z.string().min(1, "Impact is required"),
+  teamSize: z.number().min(1, "Team size must be at least 1"),
+  effort: z.string().min(1, "Effort level is required").max(100),
+  peopleInfluenced: z
+    .number()
+    .min(1, "Number of people influenced is required"),
+  visibility: z.enum(["public", "private"]).default("public"),
+});
 
 interface CreateModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onCreate: () => void;
 }
 
-export function CreateModal({ open, onOpenChange }: CreateModalProps) {
+export function CreateModal({
+  open,
+  onOpenChange,
+  onCreate,
+}: CreateModalProps) {
+  const [activeTab, setActiveTab] = useState("project");
   const [projectTags, setProjectTags] = useState<string[]>([]);
   const [newTag, setNewTag] = useState("");
+  const [formData, setFormData] = useState({
+    title: "",
+    description: "",
+    category: "",
+    impact: "",
+    teamSize: "",
+    effort: "",
+    peopleInfluenced: "",
+    visibility: "public" as "public" | "private",
+  });
+
+  const [errors, setErrors] = useState<
+    Partial<Record<keyof typeof formData, string>>
+  >({});
+
+  const createProject = api.project.create.useMutation({
+    onSuccess: () => {
+      toast.success("Project created successfully");
+      onCreate();
+      onOpenChange(false);
+      setFormData({
+        title: "",
+        description: "",
+        category: "",
+        impact: "",
+        teamSize: "",
+        effort: "",
+        peopleInfluenced: "",
+        visibility: "public",
+      });
+      setProjectTags([]);
+      setErrors({});
+    },
+    onError: (error) => {
+      toast.error(`Error: ${error.message}`);
+    },
+  });
 
   const addTag = () => {
     if (newTag.trim() && !projectTags.includes(newTag.trim())) {
@@ -43,18 +102,49 @@ export function CreateModal({ open, onOpenChange }: CreateModalProps) {
     setProjectTags(projectTags.filter((tag) => tag !== tagToRemove));
   };
 
+  const handleCreateProject = () => {
+    const parsedData = {
+      ...formData,
+      teamSize: parseInt(formData.teamSize) || 0,
+      peopleInfluenced: parseInt(formData.peopleInfluenced) || 0,
+    };
+
+    const result = projectSchema.safeParse(parsedData);
+    if (!result.success) {
+      const fieldErrors = result.error.flatten().fieldErrors;
+      setErrors({
+        title: fieldErrors.title?.[0],
+        description: fieldErrors.description?.[0],
+        category: fieldErrors.category?.[0],
+        impact: fieldErrors.impact?.[0],
+        teamSize: fieldErrors.teamSize?.[0],
+        effort: fieldErrors.effort?.[0],
+        peopleInfluenced: fieldErrors.peopleInfluenced?.[0],
+      });
+      toast.error("Please fill in all required fields correctly");
+      return;
+    }
+
+    createProject.mutate({
+      ...parsedData,
+      requiredTools: projectTags,
+      typeOfPeople: undefined,
+      actionPlan: [],
+      collaboration: undefined,
+    });
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Create Something Amazing</DialogTitle>
           <DialogDescription>
-            Share your progress with a heartbeat or start a new project to
-            collaborate with the community.
+            Start a new project to collaborate with the community.
           </DialogDescription>
         </DialogHeader>
 
-        <Tabs defaultValue="heartbeat" className="w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="heartbeat" className="flex items-center gap-2">
               <Heart className="h-4 w-4" />
@@ -68,7 +158,9 @@ export function CreateModal({ open, onOpenChange }: CreateModalProps) {
 
           <TabsContent value="heartbeat" className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="heartbeat-content">What's on your mind?</Label>
+              <Label htmlFor="heartbeat-content">
+                What&apos;s on your mind?
+              </Label>
               <Textarea
                 id="heartbeat-content"
                 placeholder="Share your progress, celebrate wins, ask for help, or just say hello to the community..."
@@ -90,7 +182,7 @@ export function CreateModal({ open, onOpenChange }: CreateModalProps) {
               <Button variant="outline" onClick={() => onOpenChange(false)}>
                 Cancel
               </Button>
-              <Button>Share Heartbeat</Button>
+              <Button disabled>Share Heartbeat</Button>
             </div>
           </TabsContent>
 
@@ -100,27 +192,46 @@ export function CreateModal({ open, onOpenChange }: CreateModalProps) {
                 <Label htmlFor="project-title">Project Title</Label>
                 <Input
                   id="project-title"
+                  value={formData.title}
+                  onChange={(e) =>
+                    setFormData({ ...formData, title: e.target.value })
+                  }
                   placeholder="e.g., AI-Powered Task Manager"
                 />
+                {errors.title && (
+                  <p className="text-destructive text-sm">{errors.title}</p>
+                )}
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="project-category">Category</Label>
-                <Select>
+                <Select
+                  value={formData.category}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, category: value })
+                  }
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Select a category" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="ai-ml">AI/ML</SelectItem>
-                    <SelectItem value="web-dev">Web Development</SelectItem>
-                    <SelectItem value="mobile">Mobile Apps</SelectItem>
-                    <SelectItem value="ecommerce">E-commerce</SelectItem>
-                    <SelectItem value="social-impact">Social Impact</SelectItem>
-                    <SelectItem value="web3">Web3/Blockchain</SelectItem>
-                    <SelectItem value="design">Design</SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
+                    <SelectItem value="AI/ML">AI/ML</SelectItem>
+                    <SelectItem value="Web Development">
+                      Web Development
+                    </SelectItem>
+                    <SelectItem value="Mobile Apps">Mobile Apps</SelectItem>
+                    <SelectItem value="E-commerce">E-commerce</SelectItem>
+                    <SelectItem value="Social Impact">Social Impact</SelectItem>
+                    <SelectItem value="Web3/Blockchain">
+                      Web3/Blockchain
+                    </SelectItem>
+                    <SelectItem value="Design">Design</SelectItem>
+                    <SelectItem value="Other">Other</SelectItem>
                   </SelectContent>
                 </Select>
+                {errors.category && (
+                  <p className="text-destructive text-sm">{errors.category}</p>
+                )}
               </div>
             </div>
 
@@ -128,29 +239,61 @@ export function CreateModal({ open, onOpenChange }: CreateModalProps) {
               <Label htmlFor="project-description">Description</Label>
               <Textarea
                 id="project-description"
+                value={formData.description}
+                onChange={(e) =>
+                  setFormData({ ...formData, description: e.target.value })
+                }
                 placeholder="Describe your project, its goals, and what kind of collaborators you're looking for..."
                 className="min-h-[100px]"
               />
+              {errors.description && (
+                <p className="text-destructive text-sm">{errors.description}</p>
+              )}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="project-requirements">
-                Requirements & Skills Needed
-              </Label>
+              <Label htmlFor="project-impact">Impact</Label>
               <Textarea
-                id="project-requirements"
-                placeholder="What skills, experience, or resources are needed for this project?"
+                id="project-impact"
+                value={formData.impact}
+                onChange={(e) =>
+                  setFormData({ ...formData, impact: e.target.value })
+                }
+                placeholder="What impact will this project have?"
                 className="min-h-[80px]"
               />
+              {errors.impact && (
+                <p className="text-destructive text-sm">{errors.impact}</p>
+              )}
             </div>
 
             <div className="space-y-2">
-              <Label>Technologies & Tags</Label>
+              <Label htmlFor="project-people-influenced">
+                Number of People it will Influence
+              </Label>
+              <Input
+                id="project-people-influenced"
+                type="number"
+                value={formData.peopleInfluenced}
+                onChange={(e) =>
+                  setFormData({ ...formData, peopleInfluenced: e.target.value })
+                }
+                placeholder="e.g., 100"
+              />
+              {errors.peopleInfluenced && (
+                <p className="text-destructive text-sm">
+                  {errors.peopleInfluenced}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label>Technologies & Tools</Label>
               <div className="flex gap-2">
                 <Input
                   value={newTag}
                   onChange={(e) => setNewTag(e.target.value)}
-                  placeholder="Add a tag (e.g., React, Python, Design)"
+                  placeholder="Add a tool (e.g., React, Python, Design)"
                   onKeyPress={(e) =>
                     e.key === "Enter" && (e.preventDefault(), addTag())
                   }
@@ -183,44 +326,75 @@ export function CreateModal({ open, onOpenChange }: CreateModalProps) {
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="project-timeline">Expected Timeline</Label>
-                <Select>
+                <Label htmlFor="project-effort">Effort Level</Label>
+                <Select
+                  value={formData.effort}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, effort: value })
+                  }
+                >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select timeline" />
+                    <SelectValue placeholder="Select effort level" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="1-2-weeks">1-2 weeks</SelectItem>
-                    <SelectItem value="1-month">1 month</SelectItem>
-                    <SelectItem value="2-3-months">2-3 months</SelectItem>
-                    <SelectItem value="3-6-months">3-6 months</SelectItem>
-                    <SelectItem value="6-months-plus">6+ months</SelectItem>
-                    <SelectItem value="ongoing">Ongoing</SelectItem>
+                    <SelectItem value="Low">Low</SelectItem>
+                    <SelectItem value="Medium">Medium</SelectItem>
+                    <SelectItem value="High">High</SelectItem>
                   </SelectContent>
                 </Select>
+                {errors.effort && (
+                  <p className="text-destructive text-sm">{errors.effort}</p>
+                )}
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="project-team-size">Team Size Needed</Label>
-                <Select>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select team size" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="solo">Just me (solo project)</SelectItem>
-                    <SelectItem value="2-3">2-3 people</SelectItem>
-                    <SelectItem value="4-6">4-6 people</SelectItem>
-                    <SelectItem value="7-10">7-10 people</SelectItem>
-                    <SelectItem value="10-plus">10+ people</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Input
+                  id="project-team-size"
+                  type="number"
+                  value={formData.teamSize}
+                  onChange={(e) =>
+                    setFormData({ ...formData, teamSize: e.target.value })
+                  }
+                  placeholder="e.g., 4"
+                />
+                {errors.teamSize && (
+                  <p className="text-destructive text-sm">{errors.teamSize}</p>
+                )}
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="project-visibility">Visibility</Label>
+              <Select
+                value={formData.visibility}
+                onValueChange={(value) =>
+                  setFormData({
+                    ...formData,
+                    visibility: value as "public" | "private",
+                  })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select visibility" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="public">Public</SelectItem>
+                  <SelectItem value="private">Private</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => onOpenChange(false)}>
                 Cancel
               </Button>
-              <Button>Create Project</Button>
+              <Button
+                onClick={handleCreateProject}
+                disabled={createProject.isPending}
+              >
+                Create Project
+              </Button>
             </div>
           </TabsContent>
         </Tabs>

@@ -1,6 +1,5 @@
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import { type DefaultSession, type NextAuthConfig } from "next-auth";
-import GoogleProvider from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { db } from "@/server/db";
@@ -21,6 +20,11 @@ declare module "next-auth" {
       isVerified?: boolean;
     } & DefaultSession["user"];
   }
+
+  interface User {
+    role?: "user" | "admin";
+    isVerified?: boolean;
+  }
 }
 
 declare module "@auth/core/adapters" {
@@ -32,17 +36,6 @@ declare module "@auth/core/adapters" {
 
 export const authConfig: NextAuthConfig = {
   providers: [
-    GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-      authorization: {
-        params: {
-          prompt: "consent",
-          access_type: "offline",
-          response_type: "code",
-        },
-      },
-    }),
     CredentialsProvider({
       name: "Credentials",
       credentials: {
@@ -73,7 +66,7 @@ export const authConfig: NextAuthConfig = {
     }),
   ],
   adapter: DrizzleAdapter(db, {
-    usersTable: users as any,
+    usersTable: users,
     accountsTable: accounts,
     sessionsTable: sessions,
     verificationTokensTable: verificationTokens,
@@ -87,14 +80,14 @@ export const authConfig: NextAuthConfig = {
           .where(eq(users.email, user.email))
           .limit(1);
         if (!existingUser) {
-          // Create a new user if they don't exist
-          const lastDigits = profile?.phone_number
-            ? profile.phone_number.slice(-4)
-            : Math.floor(1000 + Math.random() * 9000).toString();
-          const baseUsername =
-            `${profile?.given_name || "user"}${profile?.family_name || ""}${lastDigits}`
-              .replace(/\s+/g, "")
-              .toLowerCase();
+          const lastDigits =
+            profile?.phone_number?.slice(-4) ??
+            Math.floor(1000 + Math.random() * 9000).toString();
+          const baseUsername = `${profile?.given_name ?? "user"}${
+            profile?.family_name ?? ""
+          }${lastDigits}`
+            .replace(/\s+/g, "")
+            .toLowerCase();
           let username = baseUsername;
           let counter = 1;
           while (
@@ -112,38 +105,38 @@ export const authConfig: NextAuthConfig = {
           await db.insert(users).values({
             id: user.id,
             email: user.email,
-            firstName: profile?.given_name || "User",
-            lastName: profile?.family_name || "",
+            firstName: profile?.given_name ?? "User",
+            lastName: profile?.family_name ?? "",
             username,
-            whatsappNumber: profile?.phone_number || "",
+            whatsappNumber: profile?.phone_number ?? "",
             profileCompleted: false,
             role: "user",
-            isVerified: profile?.email_verified || false,
+            isVerified: profile?.email_verified ?? false,
           });
         }
       }
       return true;
     },
-    session: ({ session, user }) => {
-      if (session.user && user) {
-        session.user.id = user.id;
-        session.user.role = (user as any).role || "user";
-        session.user.isVerified = (user as any).isVerified || false;
-      }
-      return session;
-    },
-    jwt: ({ token, user }) => {
+    async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
-        token.role = (user as any).role || "user";
-        token.isVerified = (user as any).isVerified || false;
+        token.role = user.role ?? "user";
+        token.isVerified = user.isVerified ?? false;
       }
       return token;
     },
+    async session({ session, token }) {
+      /* eslint-disable @typescript-eslint/prefer-optional-chain */
+      if (session.user) {
+        session.user.id = token.id as string;
+        session.user.role = token.role as "user" | "admin";
+        session.user.isVerified = token.isVerified as boolean;
+      }
+      /* eslint-enable @typescript-eslint/prefer-optional-chain */
+      return session;
+    },
     redirect: async ({ url, baseUrl }) => {
-      // Allow relative callback URLs
       if (url.startsWith("/")) return `${baseUrl}${url}`;
-      // Allow URLs on the same origin
       if (new URL(url).origin === baseUrl) return url;
       return baseUrl;
     },

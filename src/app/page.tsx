@@ -4,8 +4,11 @@ import { auth } from "@/server/auth";
 
 export default async function HomePage() {
   const session = await auth();
-  if (session) {
+  console.log("Session:", session);
+
+  if (session?.user?.id) {
     return <AuthenticatedApp />;
   }
+
   return <LandingPage />;
 }

@@ -19,25 +19,37 @@ import {
   UserPlus,
   ExternalLink,
 } from "lucide-react";
+import { api } from "@/trpc/react";
 
-interface Project {
-  id: number;
+type Project = {
+  id: string;
   title: string;
   description: string;
   category: string;
-  creator: { name: string; avatar: string; id: string };
-  members: number;
-  maxMembers: number;
-  upvotes: number;
-  createdAt: string;
-  status: string;
-  tags: string[];
-  difficulty: string;
-  timeline: string;
-  requirements: string;
-  isJoined: boolean;
-  isCreator: boolean;
-}
+  impact: string;
+  teamSize: number;
+  effort: string;
+  peopleInfluenced: number | null;
+  typeOfPeople: string | null;
+  requiredTools: string[] | null;
+  actionPlan: string[] | null;
+  collaboration: string | null;
+  likes: number;
+  creatorId: string;
+  status: "open" | "ongoing" | "completed";
+  visibility: "public" | "private";
+  adminNotes: string | null;
+  createdAt: Date;
+  updatedAt: Date | null;
+  voteCount: number;
+  creator: {
+    id: string;
+    username: string | null;
+    profileImageUrl: string | null;
+  };
+  isMember?: boolean;
+  isCreator?: boolean;
+};
 
 interface ProjectDetailModalProps {
   project: Project;
@@ -56,6 +68,8 @@ export function ProjectDetailModal({
   onLeave,
   onUpvote,
 }: ProjectDetailModalProps) {
+  const { data: members } = api.project.getMembers.useQuery(project.id);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
@@ -65,13 +79,11 @@ export function ProjectDetailModal({
               <div className="flex gap-2">
                 <Badge variant="outline">{project.category}</Badge>
                 <Badge
-                  variant={
-                    project.status === "Active" ? "default" : "secondary"
-                  }
+                  variant={project.status === "open" ? "default" : "secondary"}
                 >
                   {project.status}
                 </Badge>
-                <Badge variant="outline">{project.difficulty}</Badge>
+                <Badge variant="outline">{project.effort}</Badge>
               </div>
               <DialogTitle className="text-2xl">{project.title}</DialogTitle>
             </div>
@@ -79,19 +91,23 @@ export function ProjectDetailModal({
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* Creator Info */}
           <div className="flex items-center gap-3">
             <Avatar className="h-12 w-12">
-              <AvatarImage src={project.creator.avatar || "/placeholder.svg"} />
-              <AvatarFallback>{project.creator.name[0]}</AvatarFallback>
+              <AvatarImage
+                src={project.creator.profileImageUrl ?? "/placeholder.svg"}
+              />
+              <AvatarFallback>
+                {project.creator.username?.[0] ?? "U"}
+              </AvatarFallback>
             </Avatar>
             <div>
-              <p className="font-semibold">{project.creator.name}</p>
+              <p className="font-semibold">
+                {project.creator.username ?? "Unknown"}
+              </p>
               <p className="text-muted-foreground text-sm">Project Creator</p>
             </div>
           </div>
 
-          {/* Project Stats */}
           <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
             <div className="bg-muted rounded-lg p-3 text-center">
               <div className="text-muted-foreground mb-1 flex items-center justify-center gap-1 text-sm">
@@ -99,7 +115,7 @@ export function ProjectDetailModal({
                 Members
               </div>
               <div className="font-semibold">
-                {project.members}/{project.maxMembers}
+                {members?.length ?? 0}/{project.teamSize}
               </div>
             </div>
             <div className="bg-muted rounded-lg p-3 text-center">
@@ -107,14 +123,14 @@ export function ProjectDetailModal({
                 <Heart className="h-4 w-4" />
                 Upvotes
               </div>
-              <div className="font-semibold">{project.upvotes}</div>
+              <div className="font-semibold">{project.voteCount}</div>
             </div>
             <div className="bg-muted rounded-lg p-3 text-center">
               <div className="text-muted-foreground mb-1 flex items-center justify-center gap-1 text-sm">
                 <Clock className="h-4 w-4" />
-                Timeline
+                Effort
               </div>
-              <div className="text-sm font-semibold">{project.timeline}</div>
+              <div className="text-sm font-semibold">{project.effort}</div>
             </div>
             <div className="bg-muted rounded-lg p-3 text-center">
               <div className="text-muted-foreground mb-1 flex items-center justify-center gap-1 text-sm">
@@ -129,7 +145,6 @@ export function ProjectDetailModal({
 
           <Separator />
 
-          {/* Description */}
           <div>
             <h3 className="mb-2 flex items-center gap-2 font-semibold">
               <Target className="h-4 w-4" />
@@ -140,35 +155,43 @@ export function ProjectDetailModal({
             </p>
           </div>
 
-          {/* Requirements */}
           <div>
-            <h3 className="mb-2 font-semibold">Requirements & Skills Needed</h3>
+            <h3 className="mb-2 font-semibold">Impact</h3>
             <p className="text-muted-foreground leading-relaxed">
-              {project.requirements}
+              {project.impact}
             </p>
           </div>
 
-          {/* Technologies */}
           <div>
-            <h3 className="mb-2 font-semibold">Technologies & Tags</h3>
+            <h3 className="mb-2 font-semibold">Technologies & Tools</h3>
             <div className="flex flex-wrap gap-2">
-              {project.tags.map((tag) => (
-                <Badge key={tag} variant="secondary">
-                  {tag}
+              {(project.requiredTools ?? []).map((tool) => (
+                <Badge key={tool} variant="secondary">
+                  {tool}
                 </Badge>
               ))}
             </div>
           </div>
 
+          {project.actionPlan && project.actionPlan.length > 0 && (
+            <div>
+              <h3 className="mb-2 font-semibold">Action Plan</h3>
+              <ul className="text-muted-foreground list-disc pl-5">
+                {project.actionPlan.map((step, index) => (
+                  <li key={index}>{step}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
           <Separator />
 
-          {/* Actions */}
           <div className="flex gap-3">
             {project.isCreator ? (
               <Button className="flex-1" disabled>
                 You created this project
               </Button>
-            ) : project.isJoined ? (
+            ) : project.isMember ? (
               <>
                 <Button
                   variant="outline"
@@ -186,12 +209,10 @@ export function ProjectDetailModal({
               <Button
                 onClick={onJoin}
                 className="flex-1"
-                disabled={project.members >= project.maxMembers}
+                disabled={project.status !== "open"}
               >
                 <UserPlus className="mr-2 h-4 w-4" />
-                {project.members >= project.maxMembers
-                  ? "Project Full"
-                  : "Join Project"}
+                {project.status !== "open" ? "Closed" : "Join Project"}
               </Button>
             )}
             <Button variant="outline" onClick={onUpvote}>
