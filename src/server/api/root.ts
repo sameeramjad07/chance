@@ -1,8 +1,8 @@
 import { createCallerFactory, createTRPCRouter } from "@/server/api/trpc";
 // import { postRouter } from "@/server/api/routers/post";
 // import { adminRouter } from "./routers/admin";
-// import { heartbeatRouter } from "./routers/heartbeat";
-// import { spotlightRouter } from "./routers/spotlight";
+import { heartbeatRouter } from "./routers/heartbeat";
+import { spotlightRouter } from "./routers/spotlight";
 import { projectRouter } from "./routers/project";
 import { userRouter } from "./routers/user";
 
@@ -14,8 +14,8 @@ import { userRouter } from "./routers/user";
 export const appRouter = createTRPCRouter({
   // post: postRouter,
   // admin: adminRouter,
-  // heartbeat: heartbeatRouter,
-  // spotlight: spotlightRouter,
+  spotlight: spotlightRouter,
+  heartbeat: heartbeatRouter,
   project: projectRouter,
   user: userRouter,
 });
