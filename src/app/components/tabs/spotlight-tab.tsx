@@ -54,7 +54,12 @@ export function SpotlightTab() {
 
       {/* Filters */}
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between md:gap-4">
-        <Select value={timeframe} onValueChange={setTimeframe}>
+        <Select
+          value={timeframe}
+          onValueChange={(val) =>
+            setTimeframe(val as "weekly" | "monthly" | "allTime")
+          }
+        >
           <SelectTrigger className="h-10 flex-1 md:h-9 md:w-[140px]">
             <SelectValue />
           </SelectTrigger>
@@ -64,6 +69,7 @@ export function SpotlightTab() {
             <SelectItem value="allTime">All Time</SelectItem>
           </SelectContent>
         </Select>
+
         <Badge
           variant="secondary"
           className="flex items-center justify-center gap-1 md:justify-start"

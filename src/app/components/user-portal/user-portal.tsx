@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -11,9 +11,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Heart, Calendar, Edit, Badge } from "lucide-react";
+import { Heart, Calendar, Edit } from "lucide-react";
 import { api } from "@/trpc/react";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
@@ -37,21 +38,23 @@ export function UserProfile() {
     undefined,
     {
       enabled: !!session,
-      onSuccess: (data) => {
-        if (isEditing) return;
-        setFormData({
-          firstName: data.firstName ?? "",
-          lastName: data.lastName ?? "",
-          username: data.username ?? "",
-          bio: data.bio ?? "",
-          school: data.school ?? "",
-          instagram: data.instagram ?? "",
-          whatsappNumber: data.whatsappNumber ?? "",
-          profileImageUrl: data.profileImageUrl ?? "",
-        });
-      },
     },
   );
+
+  useEffect(() => {
+    if (user && !isEditing) {
+      setFormData({
+        firstName: user.firstName ?? "",
+        lastName: user.lastName ?? "",
+        username: user.username ?? "",
+        bio: user.bio ?? "",
+        school: user.school ?? "",
+        instagram: user.instagram ?? "",
+        whatsappNumber: user.whatsappNumber ?? "",
+        profileImageUrl: user.profileImageUrl ?? "",
+      });
+    }
+  }, [user, isEditing]);
 
   const { data: projects, isLoading: projectsLoading } =
     api.user.getMyProjects.useQuery(undefined, {

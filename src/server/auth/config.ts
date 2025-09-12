@@ -17,12 +17,14 @@ declare module "next-auth" {
     user: {
       id: string;
       role?: "user" | "admin";
+      username?: string;
       isVerified?: boolean;
     } & DefaultSession["user"];
   }
 
   interface User {
     role?: "user" | "admin";
+    username?: string;
     isVerified?: boolean;
   }
 }
@@ -30,6 +32,7 @@ declare module "next-auth" {
 declare module "@auth/core/adapters" {
   interface AdapterUser {
     role?: "user" | "admin";
+    username?: string;
     isVerified?: boolean;
   }
 }
@@ -121,6 +124,7 @@ export const authConfig: NextAuthConfig = {
       if (user) {
         token.id = user.id;
         token.role = user.role ?? "user";
+        token.username = user.username;
         token.isVerified = user.isVerified ?? false;
       }
       return token;
@@ -130,6 +134,7 @@ export const authConfig: NextAuthConfig = {
       if (session.user) {
         session.user.id = token.id as string;
         session.user.role = token.role as "user" | "admin";
+        session.user.username = token.username as string;
         session.user.isVerified = token.isVerified as boolean;
       }
       /* eslint-enable @typescript-eslint/prefer-optional-chain */

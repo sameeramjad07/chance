@@ -12,7 +12,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -21,14 +20,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
-import { ImageIcon, Video, X, Plus, Hash, Rocket } from "lucide-react";
+import { ImageIcon, Video, X, Plus, Hash } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "@/trpc/react";
-import Error from "next/error";
-import { useUploadThing } from "@/utils/uploadthing";
-import type { FileWithPath } from "@uploadthing/react";
+import { UploadButton } from "@/lib/uploadthing";
 
 interface CreateHeartbeatModalProps {
   open: boolean;
@@ -48,22 +46,25 @@ export function CreateHeartbeatModal({
   const [visibility, setVisibility] = useState<"public" | "private">("public");
   const [hashtags, setHashtags] = useState<string[]>([]);
   const [newHashtag, setNewHashtag] = useState("");
-  const [uploadedFiles, setUploadedFiles] = useState<string[]>([]);
+  const [mediaUrl, setMediaUrl] = useState<string | undefined>();
+  const [mediaType, setMediaType] = useState<"image" | "video" | undefined>();
   const [isUploading, setIsUploading] = useState(false);
-  const { startUpload } = useUploadThing("mediaUploader");
 
   const createMutation = api.heartbeat.create.useMutation({
     onSuccess: () => {
-      toast("Success! Heartbeat posted successfully");
+      toast.success("Heartbeat posted successfully!");
+      setContent("");
+      setHashtags([]);
+      setMediaUrl(undefined);
+      setMediaType(undefined);
       onOpenChange(false);
       onSuccess?.();
     },
-    onError: (error: Error) => {
-      toast("Error");
+    onError: (error) => {
+      toast.error(`Error: ${error.message}`);
     },
   });
 
-  // Sync initialContent when it changes
   useEffect(() => {
     setContent(initialContent);
   }, [initialContent]);
@@ -80,38 +81,14 @@ export function CreateHeartbeatModal({
     setHashtags(hashtags.filter((tag) => tag !== tagToRemove));
   };
 
-  const handleFileUpload = async (
-    event: React.ChangeEvent<HTMLInputElement>,
-  ) => {
-    const files = event.target.files;
-    if (!files) return;
-
-    setIsUploading(true);
-    try {
-      const uploaded = await startUpload(Array.from(files) as FileWithPath[]);
-      if (uploaded) {
-        const urls = uploaded.map((file) => file.url);
-        setUploadedFiles([...uploadedFiles, ...urls]);
-      }
-    } catch (error) {
-      toast("Error! Failed to upload files");
-    } finally {
-      setIsUploading(false);
-    }
-  };
-
-  const removeFile = (fileUrl: string) => {
-    setUploadedFiles(uploadedFiles.filter((url) => url !== fileUrl));
-  };
-
   const handlePost = () => {
     if (!session) {
-      toast("You need to be signed in to create posts");
+      toast.error("You need to be signed in to create posts");
       return;
     }
 
     if (!content.trim()) {
-      toast("Error! Content is required");
+      toast.error("Content is required");
       return;
     }
 
@@ -119,9 +96,11 @@ export function CreateHeartbeatModal({
       `${content} ${hashtags.map((tag) => `#${tag}`).join(" ")}`.trim();
 
     createMutation.mutate({
+      userId: session.user.id,
       content: finalContent,
       visibility,
-      image: uploadedFiles[0], // Using first file as per schema (imageUrl field)
+      ...(mediaType === "image" && mediaUrl ? { image: mediaUrl } : {}),
+      ...(mediaType === "video" && mediaUrl ? { video: mediaUrl } : {}),
     });
   };
 
@@ -132,9 +111,9 @@ export function CreateHeartbeatModal({
           <DialogTitle>Create a Heartbeat</DialogTitle>
           <DialogDescription>
             Share your progress, celebrate wins, or connect with the community.
+            You can add one image or one video per post.
           </DialogDescription>
         </DialogHeader>
-
         <div className="space-y-4">
           {/* User Info */}
           <div className="flex items-center gap-3">
@@ -154,7 +133,7 @@ export function CreateHeartbeatModal({
 
           {/* Content */}
           <div className="space-y-2">
-            <Label htmlFor="heartbeat-content">What&apos;s happening?</Label>
+            <Label htmlFor="heartbeat-content">What's happening?</Label>
             <Textarea
               id="heartbeat-content"
               placeholder="Share your thoughts, progress, or ask the community for help..."
@@ -189,52 +168,106 @@ export function CreateHeartbeatModal({
 
           {/* Media Upload */}
           <div className="space-y-3">
-            <Label>Media (Optional)</Label>
+            <Label>Media (Optional - Choose one)</Label>
             <div className="flex gap-2">
-              <Label htmlFor="media-upload" className="cursor-pointer">
-                <div className="border-border hover:bg-muted flex items-center gap-2 rounded-lg border px-3 py-2 transition-colors">
-                  <ImageIcon className="h-4 w-4" />
-                  <span className="text-sm">Add Media</span>
-                </div>
-                <Input
-                  id="media-upload"
-                  type="file"
-                  accept="image/*,video/*"
-                  multiple
-                  className="hidden"
-                  onChange={handleFileUpload}
-                  disabled={isUploading}
-                />
-              </Label>
+              <UploadButton
+                endpoint="imageUploader"
+                onClientUploadComplete={(res) => {
+                  if (res && res.length > 0) {
+                    const file = res[0]!; // Now TypeScript knows res is not undefined
+                    setMediaUrl(file.url);
+                    setMediaType("image"); // or "video" for videoUploader
+                    toast.success("Image uploaded successfully!");
+                  }
+                  setIsUploading(false);
+                }}
+                onUploadError={(error) => {
+                  setIsUploading(false);
+                  toast.error(`Image upload failed: ${error.message}`);
+                }}
+                onUploadBegin={() => setIsUploading(true)}
+                onUploadProgress={() => setIsUploading(true)}
+                onUploadAborted={() => setIsUploading(false)}
+                disabled={isUploading || !!mediaUrl}
+                className="ut-button:bg-primary ut-button:text-primary-foreground ut-button:hover:bg-primary/90 ut-button:rounded-lg ut-button:px-3 ut-button:py-2"
+                content={{
+                  button({ ready }) {
+                    return ready ? (
+                      <div className="flex items-center gap-2">
+                        <ImageIcon className="h-4 w-4" />
+                        <span>Add Image</span>
+                      </div>
+                    ) : (
+                      "Uploading..."
+                    );
+                  },
+                  allowedContent: "Max 4MB",
+                }}
+              />
+              <UploadButton
+                endpoint="videoUploader"
+                onClientUploadComplete={(res) => {
+                  if (res && res.length > 0) {
+                    const file = res[0]!; // Now TypeScript knows res is not undefined
+                    setMediaUrl(file.url);
+                    setMediaType("video");
+                    toast.success("Video uploaded successfully!");
+                  }
+                  setIsUploading(false);
+                }}
+                onUploadError={(error) => {
+                  setIsUploading(false);
+                  toast.error(`Video upload failed: ${error.message}`);
+                }}
+                onUploadBegin={() => setIsUploading(true)}
+                onUploadProgress={() => setIsUploading(true)}
+                onUploadAborted={() => setIsUploading(false)}
+                disabled={isUploading || !!mediaUrl}
+                className="ut-button:bg-primary ut-button:text-primary-foreground ut-button:hover:bg-primary/90 ut-button:rounded-lg ut-button:px-3 ut-button:py-2"
+                content={{
+                  button({ ready }) {
+                    return ready ? (
+                      <div className="flex items-center gap-2">
+                        <Video className="h-4 w-4" />
+                        <span>Add Video</span>
+                      </div>
+                    ) : (
+                      "Uploading..."
+                    );
+                  },
+                  allowedContent: "Max 16MB",
+                }}
+              />
             </div>
 
-            {/* Uploaded Files Preview */}
-            {uploadedFiles.length > 0 && (
+            {/* Uploaded Media Preview */}
+            {mediaUrl && (
               <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
-                {uploadedFiles.map((url, index) => (
-                  <div key={index} className="group relative">
-                    {url.includes(".mp4") || url.includes(".webm") ? (
-                      <video
-                        src={url}
-                        className="h-24 w-full rounded-lg object-cover"
-                        controls
-                      />
-                    ) : (
-                      <img
-                        src={url}
-                        alt={`Upload ${index + 1}`}
-                        className="h-24 w-full rounded-lg object-cover"
-                      />
-                    )}
-                    <button
-                      onClick={() => removeFile(url)}
-                      className="bg-destructive text-destructive-foreground absolute top-1 right-1 rounded-full p-1 opacity-0 transition-opacity group-hover:opacity-100"
-                      disabled={isUploading}
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </div>
-                ))}
+                <div className="group relative">
+                  {mediaType === "video" ? (
+                    <video
+                      src={mediaUrl}
+                      className="h-24 w-full rounded-lg object-cover"
+                      controls
+                    />
+                  ) : (
+                    <img
+                      src={mediaUrl}
+                      alt="Uploaded media"
+                      className="h-24 w-full rounded-lg object-cover"
+                    />
+                  )}
+                  <button
+                    onClick={() => {
+                      setMediaUrl(undefined);
+                      setMediaType(undefined);
+                    }}
+                    className="bg-destructive text-destructive-foreground absolute top-1 right-1 rounded-full p-1 opacity-0 transition-opacity group-hover:opacity-100"
+                    disabled={isUploading}
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
               </div>
             )}
           </div>
@@ -285,7 +318,7 @@ export function CreateHeartbeatModal({
           </div>
 
           {/* Preview */}
-          {(content || uploadedFiles.length > 0 || hashtags.length > 0) && (
+          {(content || mediaUrl || hashtags.length > 0) && (
             <Card>
               <CardContent className="pt-4">
                 <div className="space-y-3">
@@ -306,27 +339,21 @@ export function CreateHeartbeatModal({
                     </div>
                   </div>
                   {content && <p className="text-sm">{content}</p>}
-                  {uploadedFiles.length > 0 && (
+                  {mediaUrl && (
                     <div className="grid grid-cols-2 gap-2">
-                      {uploadedFiles
-                        .slice(0, 4)
-                        .map((url, index) =>
-                          url.includes(".mp4") || url.includes(".webm") ? (
-                            <video
-                              key={index}
-                              src={url}
-                              className="h-20 w-full rounded object-cover"
-                              controls
-                            />
-                          ) : (
-                            <img
-                              key={index}
-                              src={url}
-                              alt={`Preview ${index + 1}`}
-                              className="h-20 w-full rounded object-cover"
-                            />
-                          ),
-                        )}
+                      {mediaType === "video" ? (
+                        <video
+                          src={mediaUrl}
+                          className="h-20 w-full rounded object-cover"
+                          controls
+                        />
+                      ) : (
+                        <img
+                          src={mediaUrl}
+                          alt="Preview media"
+                          className="h-20 w-full rounded object-cover"
+                        />
+                      )}
                     </div>
                   )}
                   {hashtags.length > 0 && (

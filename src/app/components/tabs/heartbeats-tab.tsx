@@ -43,11 +43,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
-import Error from "next/error";
 
 export function HeartbeatsTab() {
+  const utils = api.useUtils();
   const { data: session } = useSession();
-  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
   const [feedFilter, setFeedFilter] = useState("all");
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -67,9 +66,9 @@ export function HeartbeatsTab() {
 
   const likeMutation = api.heartbeat.like.useMutation({
     onSuccess: () => {
-      api.heartbeat.getAll.invalidate();
+      utils.heartbeat.getAll.invalidate();
     },
-    onError: (error: Error) => {
+    onError: () => {
       toast("Error");
     },
   });
@@ -77,9 +76,9 @@ export function HeartbeatsTab() {
   const deleteMutation = api.heartbeat.delete.useMutation({
     onSuccess: () => {
       toast("Success! Post deleted successfully");
-      api.heartbeat.getAll.invalidate();
+      utils.heartbeat.getAll.invalidate();
     },
-    onError: (error: Error) => {
+    onError: () => {
       toast("Error");
     },
   });
@@ -87,7 +86,7 @@ export function HeartbeatsTab() {
   const shareMutation = api.heartbeat.share.useMutation({
     onSuccess: ({ shareUrl }, { shareType }) => {
       if (shareType === "copy") {
-        navigator.clipboard.write(shareUrl);
+        navigator.clipboard.writeText(shareUrl);
         toast("Link copied");
       } else {
         const shareUrls = {
@@ -98,7 +97,7 @@ export function HeartbeatsTab() {
         window.open(shareUrls[shareType], "_blank");
       }
     },
-    onError: (error: Error) => {
+    onError: () => {
       toast("Error");
     },
   });
@@ -106,7 +105,7 @@ export function HeartbeatsTab() {
   const filteredHeartbeats = heartbeats.filter((heartbeat) => {
     const matchesSearch =
       heartbeat.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (heartbeat.user.username &&
+      (heartbeat.user?.username &&
         heartbeat.user.username
           .toLowerCase()
           .includes(searchQuery.toLowerCase()));
@@ -288,11 +287,7 @@ export function HeartbeatsTab() {
       {/* Heartbeats Feed */}
       {filteredHeartbeats.map((heartbeat) => {
         const isOwner = session?.user.id === heartbeat.userId;
-        const isLiked = heartbeatLikes.some(
-          (like) =>
-            like.heartbeatId === heartbeat.id &&
-            like.userId === session?.user.id,
-        );
+        const isLiked = heartbeat.isLikedByUser;
 
         return (
           <Card
@@ -384,13 +379,21 @@ export function HeartbeatsTab() {
                 </div>
 
                 {/* Media */}
-                {heartbeat.imageUrl && (
+                {(heartbeat.imageUrl || heartbeat.videoUrl) && (
                   <div className="overflow-hidden rounded-lg">
-                    <img
-                      src={heartbeat.imageUrl}
-                      alt="Heartbeat content"
-                      className="h-auto max-h-80 w-full cursor-pointer object-cover transition-opacity hover:opacity-95 md:max-h-96"
-                    />
+                    {heartbeat.imageUrl ? (
+                      <img
+                        src={heartbeat.imageUrl}
+                        alt="Heartbeat content"
+                        className="h-auto max-h-80 w-full cursor-pointer object-cover transition-opacity hover:opacity-95 md:max-h-96"
+                      />
+                    ) : (
+                      <video
+                        src={heartbeat.videoUrl!}
+                        className="h-auto max-h-80 w-full cursor-pointer object-cover transition-opacity hover:opacity-95 md:max-h-96"
+                        controls
+                      />
+                    )}
                   </div>
                 )}
 
@@ -503,7 +506,7 @@ export function HeartbeatsTab() {
         initialContent={quickPostContent}
         onSuccess={() => {
           setQuickPostContent("");
-          api.heartbeat.getAll.invalidate();
+          utils.heartbeat.getAll.invalidate();
         }}
       />
 

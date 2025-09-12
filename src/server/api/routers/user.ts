@@ -11,6 +11,7 @@ import {
 import { eq, desc } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import bcrypt from "bcrypt";
+import { create } from "domain";
 
 export const userRouter = createTRPCRouter({
   getProfile: protectedProcedure
@@ -33,6 +34,7 @@ export const userRouter = createTRPCRouter({
           role: users.role,
           influence: users.influence,
           isVerified: users.isVerified,
+          createdAt: users.createdAt,
         })
         .from(users)
         .where(eq(users.id, userId));

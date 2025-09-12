@@ -36,7 +36,23 @@ export const ourFileRouter = {
       console.log("file url", file.ufsUrl);
 
       // !!! Whatever is returned here is sent to the clientside `onClientUploadComplete` callback
-      return { uploadedBy: metadata.userId };
+      return { uploadedBy: metadata.userId, url: file.ufsUrl };
+    }),
+  videoUploader: f({
+    video: {
+      maxFileSize: "16MB", // adjust as needed
+      maxFileCount: 1,
+    },
+  })
+    .middleware(async ({ req }) => {
+      const user = await auth(req);
+      if (!user) throw new UploadThingError("Unauthorized");
+      return { userId: user.id };
+    })
+    .onUploadComplete(async ({ metadata, file }) => {
+      console.log("Upload complete (video) for userId:", metadata.userId);
+      console.log("file url", file.ufsUrl);
+      return { uploadedBy: metadata.userId, url: file.ufsUrl };
     }),
 } satisfies FileRouter;
 

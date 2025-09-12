@@ -1,0 +1,1 @@
+ALTER TABLE "chance_heartbeat" ADD COLUMN "video_url" varchar(255);

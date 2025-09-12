@@ -22,7 +22,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import { api } from "@/trpc/react";
-import Error from "next/error";
 
 interface CommentsModalProps {
   heartbeat: any;
@@ -53,7 +52,7 @@ export function CommentsModal({
       setNewComment("");
       toast("Success! Comment posted successfully");
     },
-    onError: (error: Error) => {
+    onError: () => {
       toast("Error");
     },
   });
@@ -63,16 +62,7 @@ export function CommentsModal({
       refetch();
       toast("Success! Comment deleted successfully");
     },
-    onError: (error: Error) => {
-      toast("Error");
-    },
-  });
-
-  const likeCommentMutation = api.heartbeat.likeComment.useMutation({
-    onSuccess: () => {
-      refetch();
-    },
-    onError: (error: Error) => {
+    onError: () => {
       toast("Error");
     },
   });
@@ -85,6 +75,7 @@ export function CommentsModal({
 
     if (newComment.trim()) {
       commentMutation.mutate({
+        userId: session.user.id,
         heartbeatId: heartbeat.id,
         content: newComment,
       });
@@ -99,21 +90,13 @@ export function CommentsModal({
 
     if (replyContent.trim()) {
       commentMutation.mutate({
+        userId: session.user.id,
         heartbeatId: heartbeat.id,
         content: replyContent,
-        parentCommentId: commentId,
       });
       setReplyContent("");
       setReplyingTo(null);
     }
-  };
-
-  const handleLikeComment = (commentId: string) => {
-    if (!session) {
-      toast("You need to be signed in to like comments");
-      return;
-    }
-    likeCommentMutation.mutate(commentId);
   };
 
   const handleDeleteComment = (commentId: string) => {
@@ -145,7 +128,7 @@ export function CommentsModal({
             <AvatarImage
               src={comment.user.profileImageUrl ?? "/placeholder.svg"}
             />
-            <AvatarFallback>{comment.user.name[0]}</AvatarFallback>
+            <AvatarFallback>{comment.user?.name?.[0] ?? "U"}</AvatarFallback>
           </Avatar>
           <div className="flex-1 space-y-2">
             <div className="bg-muted rounded-lg p-3">
@@ -161,64 +144,6 @@ export function CommentsModal({
                 )}
               </div>
               <p className="text-sm">{comment.comment.content}</p>
-            </div>
-
-            <div className="text-muted-foreground flex items-center justify-between text-xs">
-              <div className="flex items-center gap-4">
-                <span>
-                  {new Date(comment.comment.createdAt).toLocaleString()}
-                </span>
-                <button
-                  onClick={() => handleLikeComment(comment.comment.id)}
-                  className={`hover:text-foreground flex items-center gap-1 transition-colors ${
-                    isLiked ? "text-red-500" : ""
-                  }`}
-                >
-                  <Heart
-                    className={`h-3 w-3 ${isLiked ? "fill-current" : ""}`}
-                  />
-                  {comment.comment.likes > 0 && comment.comment.likes}
-                </button>
-                {!isReply && (
-                  <button
-                    onClick={() =>
-                      setReplyingTo(
-                        replyingTo === comment.comment.id
-                          ? null
-                          : comment.comment.id,
-                      )
-                    }
-                    className="hover:text-foreground flex items-center gap-1 transition-colors"
-                  >
-                    <Reply className="h-3 w-3" />
-                    Reply
-                  </button>
-                )}
-              </div>
-
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button className="hover:text-foreground transition-colors">
-                    <MoreHorizontal className="h-3 w-3" />
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  {isOwner ? (
-                    <DropdownMenuItem
-                      className="text-destructive"
-                      onClick={() => handleDeleteComment(comment.comment.id)}
-                    >
-                      <Trash2 className="mr-2 h-4 w-4" />
-                      Delete Comment
-                    </DropdownMenuItem>
-                  ) : (
-                    <DropdownMenuItem className="text-destructive">
-                      <Flag className="mr-2 h-4 w-4" />
-                      Report Comment
-                    </DropdownMenuItem>
-                  )}
-                </DropdownMenuContent>
-              </DropdownMenu>
             </div>
 
             {/* Reply Input */}
@@ -281,7 +206,9 @@ export function CommentsModal({
                 <AvatarImage
                   src={heartbeat.user.profileImageUrl ?? "/placeholder.svg"}
                 />
-                <AvatarFallback>{heartbeat.user.name[0]}</AvatarFallback>
+                <AvatarFallback>
+                  {heartbeat.user?.name?.[0] ?? "U"}
+                </AvatarFallback>
               </Avatar>
               <div>
                 <p className="text-sm font-semibold">{heartbeat.user.name}</p>
