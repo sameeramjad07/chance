@@ -89,6 +89,54 @@ export const userRouter = createTRPCRouter({
       .orderBy(desc(heartbeats.createdAt));
   }),
 
+  updateProfile: protectedProcedure
+    .input(
+      z.object({
+        firstName: z.string().min(1).optional(),
+        lastName: z.string().min(1).optional(),
+        username: z.string().min(3).optional(),
+        bio: z.string().optional(),
+        school: z.string().optional(),
+        instagram: z.string().optional(),
+        whatsappNumber: z.string().min(10).optional(),
+        profileImageUrl: z.string().optional(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const userId = ctx.session.user.id;
+
+      // Check if username is taken (if provided)
+      if (input.username) {
+        const [existingUser] = await db
+          .select()
+          .from(users)
+          .where(eq(users.username, input.username))
+          .limit(1);
+        if (existingUser && existingUser.id !== userId) {
+          throw new TRPCError({
+            code: "CONFLICT",
+            message: "Username is already taken",
+          });
+        }
+      }
+
+      const [updatedUser] = await db
+        .update(users)
+        .set({
+          ...input,
+          profileCompleted: true,
+          updatedAt: new Date(),
+        })
+        .where(eq(users.id, userId))
+        .returning();
+
+      if (!updatedUser) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "User not found" });
+      }
+
+      return updatedUser;
+    }),
+
   // ---------- Signup ----------
   signup: publicProcedure
     .input(

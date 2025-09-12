@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Link from "next/link";
 import {
-  Zap,
   Plus,
   Rocket,
   Heart,
@@ -52,10 +51,7 @@ export function AuthenticatedApp() {
           <div className="flex items-center justify-between">
             {/* Logo */}
             <div className="flex items-center gap-2">
-              <div className="bg-primary flex h-8 w-8 items-center justify-center rounded-lg">
-                <Zap className="text-primary-foreground h-5 w-5" />
-              </div>
-              <span className="text-foreground text-xl font-bold">Chance</span>
+              <span className="text-gradient text-2xl font-bold">CHANCE</span>
             </div>
 
             <div className="mx-8 hidden max-w-md flex-1 items-center gap-2 lg:flex">

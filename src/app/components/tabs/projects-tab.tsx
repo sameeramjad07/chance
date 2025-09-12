@@ -150,7 +150,10 @@ export function ProjectsTab({ onCreate }: ProjectsTabProps) {
       toast.error("Please sign in to leave a project");
       return;
     }
-    await leaveProject.mutateAsync(projectId);
+    await leaveProject.mutateAsync({
+      projectId,
+      userId: session.user.id, // session.user.id must be available
+    });
   };
 
   const handleUpvoteProject = async (projectId: string) => {

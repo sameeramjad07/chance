@@ -231,12 +231,12 @@ export const projectRouter = createTRPCRouter({
         description: z.string().min(1),
         category: z.string().max(100),
         impact: z.string().min(1),
-        peopleInfluenced: z.number().optional(),
         teamSize: z.number().min(1),
         effort: z.string().max(100),
         visibility: z.enum(["public", "private"]),
         status: z.enum(["open", "ongoing", "completed"]),
-        adminNotes: z.string().optional(),
+        peopleInfluenced: z.number().nullable().optional(),
+        adminNotes: z.string().nullable().optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -270,13 +270,14 @@ export const projectRouter = createTRPCRouter({
           impact: input.impact,
           teamSize: input.teamSize,
           effort: input.effort,
-          peopleInfluenced: input.peopleInfluenced, // ✅ persist
+          peopleInfluenced: input.peopleInfluenced ?? null,
           visibility: input.visibility,
           status: input.status,
-          adminNotes: input.adminNotes,
+          adminNotes: input.adminNotes ?? null,
           updatedAt: new Date(),
         })
-        .where(eq(projects.id, input.projectId));
+        .where(eq(projects.id, input.projectId))
+        .returning();
 
       if (!updatedProject) {
         throw new TRPCError({
@@ -372,50 +373,32 @@ export const projectRouter = createTRPCRouter({
     }),
 
   leave: protectedProcedure
-    .input(z.string())
+    .input(z.object({ projectId: z.string(), userId: z.string() }))
     .mutation(async ({ ctx, input }) => {
-      const userId = ctx.session.user.id;
-      const [project] = await db
-        .select()
-        .from(projects)
-        .where(eq(projects.id, input))
-        .limit(1);
-
-      if (!project) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Project not found",
-        });
-      }
-
-      if (project.creatorId === userId) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Creator cannot leave their own project",
-        });
-      }
-
-      const [existing] = await db
+      const [membership] = await db
         .select()
         .from(projectMembers)
         .where(
           and(
-            eq(projectMembers.projectId, input),
-            eq(projectMembers.userId, userId),
+            eq(projectMembers.projectId, input.projectId),
+            eq(projectMembers.userId, input.userId),
           ),
         )
         .limit(1);
 
-      if (!existing) {
-        return { success: true }; // Not a member
+      if (!membership) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Membership not found",
+        });
       }
 
       await db
         .delete(projectMembers)
         .where(
           and(
-            eq(projectMembers.projectId, input),
-            eq(projectMembers.userId, userId),
+            eq(projectMembers.projectId, input.projectId),
+            eq(projectMembers.userId, input.userId),
           ),
         );
 

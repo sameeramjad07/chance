@@ -1,8 +1,7 @@
 "use client";
 
-import type React from "react";
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
 import {
   Dialog,
   DialogContent,
@@ -25,33 +24,54 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 import { ImageIcon, Video, X, Plus, Hash, Rocket } from "lucide-react";
+import { toast } from "sonner";
+import { api } from "@/trpc/react";
+import Error from "next/error";
+import { useUploadThing } from "@/utils/uploadthing";
+import type { FileWithPath } from "@uploadthing/react";
 
 interface CreateHeartbeatModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  initialContent?: string;
+  onSuccess?: () => void;
 }
 
 export function CreateHeartbeatModal({
   open,
   onOpenChange,
+  initialContent = "",
+  onSuccess,
 }: CreateHeartbeatModalProps) {
-  const [content, setContent] = useState("");
-  const [selectedProject, setSelectedProject] = useState("none");
+  const { data: session } = useSession();
+  const [content, setContent] = useState(initialContent);
+  const [visibility, setVisibility] = useState<"public" | "private">("public");
   const [hashtags, setHashtags] = useState<string[]>([]);
   const [newHashtag, setNewHashtag] = useState("");
-  const [mentions, setMentions] = useState<string[]>([]);
-  const [uploadedImages, setUploadedImages] = useState<string[]>([]);
-  const [uploadedVideo, setUploadedVideo] = useState<string | null>(null);
+  const [uploadedFiles, setUploadedFiles] = useState<string[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
+  const { startUpload } = useUploadThing("mediaUploader");
 
-  const mockProjects = [
-    { id: "1", title: "AI-Powered Task Manager" },
-    { id: "2", title: "Sustainable Fashion Marketplace" },
-    { id: "3", title: "Community Garden Network" },
-  ];
+  const createMutation = api.heartbeat.create.useMutation({
+    onSuccess: () => {
+      toast("Success! Heartbeat posted successfully");
+      onOpenChange(false);
+      onSuccess?.();
+    },
+    onError: (error: Error) => {
+      toast("Error");
+    },
+  });
+
+  // Sync initialContent when it changes
+  useEffect(() => {
+    setContent(initialContent);
+  }, [initialContent]);
 
   const addHashtag = () => {
-    if (newHashtag.trim() && !hashtags.includes(newHashtag.trim())) {
-      setHashtags([...hashtags, newHashtag.trim()]);
+    const cleanTag = newHashtag.trim().replace(/^#/, "");
+    if (cleanTag && !hashtags.includes(cleanTag)) {
+      setHashtags([...hashtags, cleanTag]);
       setNewHashtag("");
     }
   };
@@ -60,39 +80,49 @@ export function CreateHeartbeatModal({
     setHashtags(hashtags.filter((tag) => tag !== tagToRemove));
   };
 
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const files = event.target.files;
-    if (files) {
-      // Mock image upload - in real app, upload to your storage service
-      const newImages = Array.from(files).map((file) =>
-        URL.createObjectURL(file),
-      );
-      setUploadedImages([...uploadedImages, ...newImages]);
+    if (!files) return;
+
+    setIsUploading(true);
+    try {
+      const uploaded = await startUpload(Array.from(files) as FileWithPath[]);
+      if (uploaded) {
+        const urls = uploaded.map((file) => file.url);
+        setUploadedFiles([...uploadedFiles, ...urls]);
+      }
+    } catch (error) {
+      toast("Error! Failed to upload files");
+    } finally {
+      setIsUploading(false);
     }
   };
 
-  const removeImage = (imageToRemove: string) => {
-    setUploadedImages(uploadedImages.filter((img) => img !== imageToRemove));
+  const removeFile = (fileUrl: string) => {
+    setUploadedFiles(uploadedFiles.filter((url) => url !== fileUrl));
   };
 
   const handlePost = () => {
-    const postData = {
-      content,
-      projectId: selectedProject,
-      hashtags,
-      mentions,
-      images: uploadedImages,
-      video: uploadedVideo,
-    };
-    console.log("Creating heartbeat:", postData);
-    onOpenChange(false);
-    // Reset form
-    setContent("");
-    setSelectedProject("none");
-    setHashtags([]);
-    setMentions([]);
-    setUploadedImages([]);
-    setUploadedVideo(null);
+    if (!session) {
+      toast("You need to be signed in to create posts");
+      return;
+    }
+
+    if (!content.trim()) {
+      toast("Error! Content is required");
+      return;
+    }
+
+    const finalContent =
+      `${content} ${hashtags.map((tag) => `#${tag}`).join(" ")}`.trim();
+
+    createMutation.mutate({
+      content: finalContent,
+      visibility,
+      image: uploadedFiles[0], // Using first file as per schema (imageUrl field)
+    });
   };
 
   return (
@@ -109,12 +139,16 @@ export function CreateHeartbeatModal({
           {/* User Info */}
           <div className="flex items-center gap-3">
             <Avatar className="h-10 w-10">
-              <AvatarImage src="/diverse-user-avatars.png" />
-              <AvatarFallback>JD</AvatarFallback>
+              <AvatarImage src={session?.user.image ?? "/placeholder.svg"} />
+              <AvatarFallback>{session?.user.name?.[0] ?? "U"}</AvatarFallback>
             </Avatar>
             <div>
-              <p className="text-sm font-semibold">John Doe</p>
-              <p className="text-muted-foreground text-xs">@johndoe</p>
+              <p className="text-sm font-semibold">
+                {session?.user.name ?? "User"}
+              </p>
+              <p className="text-muted-foreground text-xs">
+                {session?.user.username ?? "@user"}
+              </p>
             </div>
           </div>
 
@@ -127,29 +161,28 @@ export function CreateHeartbeatModal({
               value={content}
               onChange={(e) => setContent(e.target.value)}
               className="min-h-[120px] resize-none"
+              maxLength={500}
             />
             <div className="text-muted-foreground text-right text-xs">
               {content.length}/500 characters
             </div>
           </div>
 
-          {/* Project Association */}
+          {/* Visibility */}
           <div className="space-y-2">
-            <Label>Associate with Project (Optional)</Label>
-            <Select value={selectedProject} onValueChange={setSelectedProject}>
+            <Label>Visibility</Label>
+            <Select
+              value={visibility}
+              onValueChange={(value: "public" | "private") =>
+                setVisibility(value)
+              }
+            >
               <SelectTrigger>
-                <SelectValue placeholder="Select a project to associate this post with" />
+                <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="none">No project association</SelectItem>
-                {mockProjects.map((project) => (
-                  <SelectItem key={project.id} value={project.id}>
-                    <div className="flex items-center gap-2">
-                      <Rocket className="h-4 w-4" />
-                      {project.title}
-                    </div>
-                  </SelectItem>
-                ))}
+                <SelectItem value="public">Public</SelectItem>
+                <SelectItem value="private">Private</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -157,51 +190,46 @@ export function CreateHeartbeatModal({
           {/* Media Upload */}
           <div className="space-y-3">
             <Label>Media (Optional)</Label>
-
-            {/* Image Upload */}
             <div className="flex gap-2">
-              <Label htmlFor="image-upload" className="cursor-pointer">
+              <Label htmlFor="media-upload" className="cursor-pointer">
                 <div className="border-border hover:bg-muted flex items-center gap-2 rounded-lg border px-3 py-2 transition-colors">
                   <ImageIcon className="h-4 w-4" />
-                  <span className="text-sm">Add Photos</span>
+                  <span className="text-sm">Add Media</span>
                 </div>
                 <Input
-                  id="image-upload"
+                  id="media-upload"
                   type="file"
-                  accept="image/*"
+                  accept="image/*,video/*"
                   multiple
                   className="hidden"
-                  onChange={handleImageUpload}
-                />
-              </Label>
-
-              <Label htmlFor="video-upload" className="cursor-pointer">
-                <div className="border-border hover:bg-muted flex items-center gap-2 rounded-lg border px-3 py-2 transition-colors">
-                  <Video className="h-4 w-4" />
-                  <span className="text-sm">Add Video</span>
-                </div>
-                <Input
-                  id="video-upload"
-                  type="file"
-                  accept="video/*"
-                  className="hidden"
+                  onChange={handleFileUpload}
+                  disabled={isUploading}
                 />
               </Label>
             </div>
 
-            {/* Uploaded Images Preview */}
-            {uploadedImages.length > 0 && (
+            {/* Uploaded Files Preview */}
+            {uploadedFiles.length > 0 && (
               <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
-                {uploadedImages.map((image, index) => (
+                {uploadedFiles.map((url, index) => (
                   <div key={index} className="group relative">
-                    <img
-                      src={image || "/placeholder.svg"}
-                      alt={`Upload ${index + 1}`}
-                      className="h-24 w-full rounded-lg object-cover"
-                    />
+                    {url.includes(".mp4") || url.includes(".webm") ? (
+                      <video
+                        src={url}
+                        className="h-24 w-full rounded-lg object-cover"
+                        controls
+                      />
+                    ) : (
+                      <img
+                        src={url}
+                        alt={`Upload ${index + 1}`}
+                        className="h-24 w-full rounded-lg object-cover"
+                      />
+                    )}
                     <button
-                      onClick={() => removeImage(image)}
+                      onClick={() => removeFile(url)}
                       className="bg-destructive text-destructive-foreground absolute top-1 right-1 rounded-full p-1 opacity-0 transition-opacity group-hover:opacity-100"
+                      disabled={isUploading}
                     >
                       <X className="h-3 w-3" />
                     </button>
@@ -222,9 +250,12 @@ export function CreateHeartbeatModal({
                   onChange={(e) => setNewHashtag(e.target.value)}
                   placeholder="Add hashtag (e.g., AI, WebDev, Design)"
                   className="pl-10"
-                  onKeyPress={(e) =>
-                    e.key === "Enter" && (e.preventDefault(), addHashtag())
-                  }
+                  onKeyPress={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      addHashtag();
+                    }
+                  }}
                 />
               </div>
               <Button type="button" variant="outline" onClick={addHashtag}>
@@ -254,31 +285,48 @@ export function CreateHeartbeatModal({
           </div>
 
           {/* Preview */}
-          {(content || uploadedImages.length > 0 || hashtags.length > 0) && (
+          {(content || uploadedFiles.length > 0 || hashtags.length > 0) && (
             <Card>
               <CardContent className="pt-4">
                 <div className="space-y-3">
                   <div className="flex items-center gap-2">
                     <Avatar className="h-8 w-8">
-                      <AvatarImage src="/diverse-user-avatars.png" />
-                      <AvatarFallback>JD</AvatarFallback>
+                      <AvatarImage
+                        src={session?.user.image ?? "/placeholder.svg"}
+                      />
+                      <AvatarFallback>
+                        {session?.user.name?.[0] ?? "U"}
+                      </AvatarFallback>
                     </Avatar>
                     <div>
-                      <p className="text-sm font-semibold">John Doe</p>
+                      <p className="text-sm font-semibold">
+                        {session?.user.name ?? "User"}
+                      </p>
                       <p className="text-muted-foreground text-xs">Preview</p>
                     </div>
                   </div>
                   {content && <p className="text-sm">{content}</p>}
-                  {uploadedImages.length > 0 && (
+                  {uploadedFiles.length > 0 && (
                     <div className="grid grid-cols-2 gap-2">
-                      {uploadedImages.slice(0, 4).map((image, index) => (
-                        <img
-                          key={index}
-                          src={image || "/placeholder.svg"}
-                          alt={`Preview ${index + 1}`}
-                          className="h-20 w-full rounded object-cover"
-                        />
-                      ))}
+                      {uploadedFiles
+                        .slice(0, 4)
+                        .map((url, index) =>
+                          url.includes(".mp4") || url.includes(".webm") ? (
+                            <video
+                              key={index}
+                              src={url}
+                              className="h-20 w-full rounded object-cover"
+                              controls
+                            />
+                          ) : (
+                            <img
+                              key={index}
+                              src={url}
+                              alt={`Preview ${index + 1}`}
+                              className="h-20 w-full rounded object-cover"
+                            />
+                          ),
+                        )}
                     </div>
                   )}
                   {hashtags.length > 0 && (
@@ -304,8 +352,13 @@ export function CreateHeartbeatModal({
             <Button variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button onClick={handlePost} disabled={!content.trim()}>
-              Post Heartbeat
+            <Button
+              onClick={handlePost}
+              disabled={
+                !content.trim() || createMutation.isPending || isUploading
+              }
+            >
+              {createMutation.isPending ? "Posting..." : "Post Heartbeat"}
             </Button>
           </div>
         </div>
