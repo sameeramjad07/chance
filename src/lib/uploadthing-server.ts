@@ -9,7 +9,7 @@ export async function uploadImage(imageUrl: string): Promise<string> {
   const buffer = Buffer.from(await response.arrayBuffer());
 
   // Create a unique filename
-  const uniqueName = `generated-${Date.now()}-${randomUUID()}.png`;
+  const uniqueName = `uploaded_image-${Date.now()}-${randomUUID()}.png`;
 
   // Upload directly to UploadThing
   const uploaded = await utapi.uploadFiles([
@@ -23,4 +23,21 @@ export async function uploadImage(imageUrl: string): Promise<string> {
   }
 
   return file.data.url; // ✅ unique file URL
+}
+
+export async function uploadVideo(videoUrl: string): Promise<string> {
+  const response = await fetch(videoUrl);
+  const buffer = Buffer.from(await response.arrayBuffer());
+
+  const uniqueName = `uploaded_video-${Date.now()}-${randomUUID()}.mp4`;
+
+  const uploaded = await utapi.uploadFiles([
+    new File([buffer], uniqueName, { type: "video/mp4" }),
+  ]);
+
+  const file = uploaded[0];
+  if (!file || file.error || !file.data?.url) {
+    throw new Error("UploadThing did not return a valid file URL");
+  }
+  return file.data.url;
 }

@@ -278,6 +278,7 @@ export const heartbeats = createTable(
       .$defaultFn(() => sql`gen_random_uuid()`),
     content: text("content").notNull(),
     imageUrl: varchar("image_url", { length: 255 }),
+    videoUrl: varchar("video_url", { length: 255 }),
     userId: varchar("user_id", { length: 255 })
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),

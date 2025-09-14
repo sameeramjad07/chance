@@ -28,6 +28,7 @@ import {
   UserPlus,
   Settings,
   Plus,
+  Loader2,
 } from "lucide-react";
 import { api } from "@/trpc/react";
 import { toast } from "sonner";
@@ -94,18 +95,19 @@ export function ProjectsTab({ onCreate }: ProjectsTabProps) {
       cursor,
     });
 
+  // Reset pagination when filters/search change
+  useEffect(() => {
+    setCursor(undefined);
+    setAllProjects([]);
+    refetch(); // re-trigger query with new filters
+  }, [selectedCategory, selectedStatus, sortBy, searchQuery, refetch]);
+
   const { data: userProjects } = api.project.getUserProjects.useQuery(
     { limit: 100 },
     { enabled: !!session },
   );
 
-  const { data: categories } = api.project.getAll.useQuery(
-    { limit: 1 },
-    {
-      select: (data) =>
-        [...new Set(data.projects.map((p) => p.category))].sort(),
-    },
-  );
+  const { data: categories } = api.project.getCategories.useQuery();
 
   const joinProject = api.project.join.useMutation({
     onSuccess: () => {
@@ -142,12 +144,20 @@ export function ProjectsTab({ onCreate }: ProjectsTabProps) {
       toast.error("Please sign in to join a project");
       return;
     }
+    if (!projectId || typeof projectId !== "string") {
+      toast.error("Invalid project ID");
+      return;
+    }
     await joinProject.mutateAsync(projectId);
   };
 
   const handleLeaveProject = async (projectId: string) => {
     if (!session) {
       toast.error("Please sign in to leave a project");
+      return;
+    }
+    if (!projectId || typeof projectId !== "string") {
+      toast.error("Invalid project ID");
       return;
     }
     await leaveProject.mutateAsync({
@@ -161,6 +171,11 @@ export function ProjectsTab({ onCreate }: ProjectsTabProps) {
       toast.error("Please sign in to upvote a project");
       return;
     }
+    if (!projectId || typeof projectId !== "string") {
+      toast.error("Invalid project ID");
+      return;
+    }
+    console.log("Attempting to upvote project:", projectId);
     await upvoteProject.mutateAsync(projectId);
   };
 
@@ -212,6 +227,16 @@ export function ProjectsTab({ onCreate }: ProjectsTabProps) {
       setCursor(data.nextCursor);
     }
   }, [inView, data?.nextCursor]);
+
+  // If still loading the first fetch
+  if (isLoading) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+        Loading Projects...
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -443,6 +468,14 @@ export function ProjectsTab({ onCreate }: ProjectsTabProps) {
                         </Button>
                       </>
                     )}
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleUpvoteProject(project.id)}
+                      disabled={upvoteProject.isPending}
+                    >
+                      <Heart className="h-4 w-4" />
+                    </Button>
                   </div>
                 </div>
               </CardContent>

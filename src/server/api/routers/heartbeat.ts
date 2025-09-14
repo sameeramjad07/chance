@@ -8,13 +8,14 @@ import {
   sharingLogs,
   users,
   insertHeartbeatSchema,
-  insertHeartbeatLikeSchema,
   insertHeartbeatCommentSchema,
-  insertSharingLogSchema,
 } from "@/server/db/schema";
-import { eq, and, desc, count, lt } from "drizzle-orm";
+import { eq, and, desc, count, lt, sql, inArray } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
-import { utapi } from "@/server/uploadthing";
+import { UTApi } from "uploadthing/server";
+
+// Instantiate UTApi
+const utapi = new UTApi();
 
 export const heartbeatRouter = createTRPCRouter({
   getAll: publicProcedure
@@ -22,9 +23,11 @@ export const heartbeatRouter = createTRPCRouter({
       z.object({
         limit: z.number().min(1).max(100).default(20),
         cursor: z.string().optional(),
+        userId: z.string().optional(), // Optional userId for context
       }),
     )
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
+      // Base query for heartbeats
       const query = db
         .select({
           heartbeat: heartbeats,
@@ -34,17 +37,24 @@ export const heartbeatRouter = createTRPCRouter({
             username: users.username,
             profileImageUrl: users.profileImageUrl,
           },
-          likeCount: count(heartbeatLikes.id).as("like_count"),
-          commentCount: count(heartbeatComments.id).as("comment_count"),
+          likeCount: count(heartbeatLikes.id).as("likeCount"),
+          commentCount: count(heartbeatComments.id).as("commentCount"),
         })
         .from(heartbeats)
-        .leftJoin(users, eq(heartbeats.userId, users.id))
+        .innerJoin(users, eq(heartbeats.userId, users.id)) // Changed to innerJoin
         .leftJoin(heartbeatLikes, eq(heartbeats.id, heartbeatLikes.heartbeatId))
         .leftJoin(
           heartbeatComments,
           eq(heartbeats.id, heartbeatComments.heartbeatId),
         )
-        .where(eq(heartbeats.visibility, "public"))
+        .where(
+          and(
+            eq(heartbeats.visibility, "public"),
+            input.cursor
+              ? lt(heartbeats.createdAt, new Date(input.cursor))
+              : undefined,
+          ),
+        )
         .groupBy(
           heartbeats.id,
           users.id,
@@ -54,11 +64,24 @@ export const heartbeatRouter = createTRPCRouter({
         )
         .orderBy(desc(heartbeats.createdAt));
 
-      if (input.cursor) {
-        query.where(lt(heartbeats.createdAt, new Date(input.cursor)));
-      }
-
       const results = await query.limit(input.limit + 1);
+
+      // Fetch user likes if user is authenticated
+      let userLikes: { heartbeatId: string }[] = [];
+      if (ctx.session?.user.id) {
+        const heartbeatIds = results.map((r) => r.heartbeat.id);
+        if (heartbeatIds.length > 0) {
+          userLikes = await db
+            .select({ heartbeatId: heartbeatLikes.heartbeatId })
+            .from(heartbeatLikes)
+            .where(
+              and(
+                eq(heartbeatLikes.userId, ctx.session.user.id),
+                inArray(heartbeatLikes.heartbeatId, heartbeatIds),
+              ),
+            );
+        }
+      }
 
       const hasNextPage = results.length > input.limit;
       const heartbeatsData = hasNextPage
@@ -69,14 +92,18 @@ export const heartbeatRouter = createTRPCRouter({
         heartbeats: heartbeatsData.map((r) => ({
           ...r.heartbeat,
           user: r.user,
-          likeCount: r.like_count,
-          commentCount: r.comment_count,
+          likeCount: r.likeCount,
+          commentCount: r.commentCount,
+          isLikedByUser: userLikes.some(
+            (like) => like.heartbeatId === r.heartbeat.id,
+          ),
         })),
-        nextCursor: hasNextPage
-          ? heartbeatsData[
-              heartbeatsData.length - 1
-            ].heartbeat.createdAt.toISOString()
-          : undefined,
+        nextCursor:
+          hasNextPage && heartbeatsData.length > 0
+            ? heartbeatsData[
+                heartbeatsData.length - 1
+              ]?.heartbeat.createdAt.toISOString()
+            : undefined,
       };
     }),
 
@@ -91,12 +118,10 @@ export const heartbeatRouter = createTRPCRouter({
       const values: typeof heartbeats.$inferInsert = {
         content: input.content,
         userId: ctx.session.user.id,
-        visibility: input.visibility || "public",
+        visibility: input.visibility ?? "public",
+        imageUrl: input.image,
+        videoUrl: input.video,
       };
-
-      if (input.image) values.imageUrl = input.image;
-      if (input.video) values.imageUrl = input.video; // Using imageUrl for both as per schema
-
       const [newHeartbeat] = await db
         .insert(heartbeats)
         .values(values)
@@ -108,20 +133,20 @@ export const heartbeatRouter = createTRPCRouter({
   delete: protectedProcedure
     .input(z.string())
     .mutation(async ({ ctx, input }) => {
-      const heartbeat = await db
+      const [heartbeat] = await db
         .select()
         .from(heartbeats)
         .where(eq(heartbeats.id, input))
         .limit(1);
 
-      if (heartbeat.length === 0) {
+      if (!heartbeat) {
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "Heartbeat not found",
         });
       }
 
-      if (heartbeat[0].userId !== ctx.session.user.id) {
+      if (heartbeat.userId !== ctx.session.user.id) {
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "Only the creator can delete this post",
@@ -129,12 +154,19 @@ export const heartbeatRouter = createTRPCRouter({
       }
 
       // Delete associated media from UploadThing
-      if (heartbeat[0].imageUrl) {
-        const fileKey = heartbeat[0].imageUrl.split("/").pop();
+      if (heartbeat.imageUrl) {
+        const fileKey = heartbeat.imageUrl.split("/").pop();
+        if (fileKey) await utapi.deleteFiles(fileKey);
+      }
+
+      // Note: Add videoUrl deletion if supported by schema
+      if (heartbeat.videoUrl) {
+        const fileKey = heartbeat.videoUrl.split("/").pop();
         if (fileKey) await utapi.deleteFiles(fileKey);
       }
 
       await db.delete(heartbeats).where(eq(heartbeats.id, input));
+
       return { success: true };
     }),
 
@@ -218,7 +250,10 @@ export const heartbeatRouter = createTRPCRouter({
         });
       }
 
-      if (comment[0].userId !== ctx.session.user.id) {
+      // ✅ safe after check
+      const cmt = comment[0]!;
+
+      if (cmt.userId !== ctx.session.user.id) {
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "Only the comment author can delete this comment",
@@ -229,53 +264,9 @@ export const heartbeatRouter = createTRPCRouter({
       await db
         .update(heartbeats)
         .set({ comments: sql`${heartbeats.comments} - 1` })
-        .where(eq(heartbeats.id, comment[0].heartbeatId));
+        .where(eq(heartbeats.id, cmt.heartbeatId));
 
       return { success: true };
-    }),
-
-  likeComment: protectedProcedure
-    .input(z.string())
-    .mutation(async ({ ctx, input }) => {
-      const userId = ctx.session.user.id;
-
-      const existing = await db
-        .select()
-        .from(heartbeatLikes)
-        .where(
-          and(
-            eq(heartbeatLikes.commentId, input),
-            eq(heartbeatLikes.userId, userId),
-          ),
-        )
-        .limit(1);
-
-      if (existing.length > 0) {
-        // Unlike
-        await db
-          .delete(heartbeatLikes)
-          .where(
-            and(
-              eq(heartbeatLikes.commentId, input),
-              eq(heartbeatLikes.userId, userId),
-            ),
-          );
-        await db
-          .update(heartbeatComments)
-          .set({ likes: sql`${heartbeatComments.likes} - 1` })
-          .where(eq(heartbeatComments.id, input));
-        return { liked: false };
-      }
-
-      await db.insert(heartbeatLikes).values({
-        commentId: input,
-        userId,
-      });
-      await db
-        .update(heartbeatComments)
-        .set({ likes: sql`${heartbeatComments.likes} + 1` })
-        .where(eq(heartbeatComments.id, input));
-      return { liked: true };
     }),
 
   getComments: publicProcedure.input(z.string()).query(async ({ input }) => {

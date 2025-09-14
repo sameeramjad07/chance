@@ -17,12 +17,16 @@ declare module "next-auth" {
     user: {
       id: string;
       role?: "user" | "admin";
+      username?: string;
+      profileImageUrl?: string;
       isVerified?: boolean;
     } & DefaultSession["user"];
   }
 
   interface User {
     role?: "user" | "admin";
+    username?: string;
+    profileImageUrl?: string;
     isVerified?: boolean;
   }
 }
@@ -30,6 +34,8 @@ declare module "next-auth" {
 declare module "@auth/core/adapters" {
   interface AdapterUser {
     role?: "user" | "admin";
+    username?: string;
+    profileImageUrl?: string;
     isVerified?: boolean;
   }
 }
@@ -61,6 +67,8 @@ export const authConfig: NextAuthConfig = {
           name: `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim(),
           role: user.role,
           isVerified: user.isVerified,
+          username: user.username ?? undefined,
+          profileImageUrl: user.profileImageUrl ?? undefined,
         };
       },
     }),
@@ -121,6 +129,8 @@ export const authConfig: NextAuthConfig = {
       if (user) {
         token.id = user.id;
         token.role = user.role ?? "user";
+        token.username = user.username ?? undefined;
+        token.profileImageUrl = user.profileImageUrl ?? undefined;
         token.isVerified = user.isVerified ?? false;
       }
       return token;
@@ -130,6 +140,10 @@ export const authConfig: NextAuthConfig = {
       if (session.user) {
         session.user.id = token.id as string;
         session.user.role = token.role as "user" | "admin";
+        session.user.username =
+          (token.username as string | undefined) ?? undefined;
+        session.user.profileImageUrl =
+          (token.profielImageUrl as string | undefined) ?? undefined;
         session.user.isVerified = token.isVerified as boolean;
       }
       /* eslint-enable @typescript-eslint/prefer-optional-chain */

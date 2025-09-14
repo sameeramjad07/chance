@@ -9,27 +9,27 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Trophy, BarChart3, Eye } from "lucide-react";
-import { UserProfileModal } from "@/app/components/modals/user-profile-modal";
+import { Trophy, BarChart3, Loader2 } from "lucide-react";
 import { api } from "@/trpc/react";
-import { useSession } from "next-auth/react";
+
+// Define the expected leaderboard user type
+interface LeaderboardUser {
+  id: string;
+  rank: number;
+  influence: number;
+  projectsCompleted: number;
+  heartbeats: number;
+  user: {
+    name: string;
+    username: string;
+    avatar: string | null;
+  };
+}
 
 export function SpotlightTab() {
-  const [timeframe, setTimeframe] = useState<"weekly" | "monthly" | "allTime">(
-    "allTime",
-  );
-  const [selectedUser, setSelectedUser] = useState<any | null>(null);
-  const { data: session } = useSession();
+  // Remove unused setTimeframe and selectedUser for now
+  const [timeframe] = useState<"weekly" | "monthly" | "allTime">("allTime");
 
   const { data: leaderboard, isLoading } = api.spotlight.getRankings.useQuery({
     limit: 20,
@@ -50,27 +50,6 @@ export function SpotlightTab() {
           Celebrating our most influential contributors who drive innovation and
           collaboration across the platform.
         </p>
-      </div>
-
-      {/* Filters */}
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between md:gap-4">
-        <Select value={timeframe} onValueChange={setTimeframe}>
-          <SelectTrigger className="h-10 flex-1 md:h-9 md:w-[140px]">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="weekly">This Week</SelectItem>
-            <SelectItem value="monthly">This Month</SelectItem>
-            <SelectItem value="allTime">All Time</SelectItem>
-          </SelectContent>
-        </Select>
-        <Badge
-          variant="secondary"
-          className="flex items-center justify-center gap-1 md:justify-start"
-        >
-          <Trophy className="h-4 w-4" />
-          Live Rankings
-        </Badge>
       </div>
 
       <Tabs defaultValue="leaderboard" className="w-full">
@@ -99,7 +78,7 @@ export function SpotlightTab() {
                     <div className="text-center">
                       <div className="relative mb-3 md:mb-4">
                         <Avatar className="mx-auto h-12 w-12 border-2 border-gray-400 md:h-16 md:w-16 md:border-4">
-                          <AvatarImage src={leaderboard[1].user.avatar} />
+                          <AvatarImage src={leaderboard[1].user.avatar ?? ""} />
                           <AvatarFallback>
                             {leaderboard[1].user.name[0]}
                           </AvatarFallback>
@@ -122,7 +101,7 @@ export function SpotlightTab() {
                     <div className="text-center">
                       <div className="relative mb-3 md:mb-4">
                         <Avatar className="mx-auto h-16 w-16 border-2 border-yellow-500 md:h-20 md:w-20 md:border-4">
-                          <AvatarImage src={leaderboard[0].user.avatar} />
+                          <AvatarImage src={leaderboard[0].user.avatar ?? ""} />
                           <AvatarFallback>
                             {leaderboard[0].user.name[0]}
                           </AvatarFallback>
@@ -145,7 +124,7 @@ export function SpotlightTab() {
                     <div className="text-center">
                       <div className="relative mb-3 md:mb-4">
                         <Avatar className="mx-auto h-12 w-12 border-2 border-amber-600 md:h-16 md:w-16 md:border-4">
-                          <AvatarImage src={leaderboard[2].user.avatar} />
+                          <AvatarImage src={leaderboard[2].user.avatar ?? ""} />
                           <AvatarFallback>
                             {leaderboard[2].user.name[0]}
                           </AvatarFallback>
@@ -181,16 +160,18 @@ export function SpotlightTab() {
             </CardHeader>
             <CardContent className="px-4 md:px-6">
               {isLoading ? (
-                <p className="text-muted-foreground text-center">Loading...</p>
+                <div className="flex min-h-[60vh] items-center justify-center">
+                  <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+                  Loading Rankings...
+                </div>
               ) : (
                 <div className="space-y-3 md:space-y-4">
-                  {leaderboard?.map((user) => (
+                  {leaderboard?.map((user: LeaderboardUser) => (
                     <div
                       key={user.id}
                       className={`hover:bg-muted/50 flex cursor-pointer items-center justify-between rounded-lg border p-3 transition-colors md:p-4 ${
                         user.rank <= 3 ? "bg-muted/30" : "bg-card"
                       }`}
-                      onClick={() => setSelectedUser(user)}
                     >
                       <div className="flex min-w-0 flex-1 items-center gap-2 md:gap-4">
                         {/* Rank */}
@@ -213,7 +194,7 @@ export function SpotlightTab() {
                         {/* User Info */}
                         <div className="flex min-w-0 flex-1 items-center gap-2 md:gap-3">
                           <Avatar className="h-8 w-8 flex-shrink-0 md:h-12 md:w-12">
-                            <AvatarImage src={user.user.avatar} />
+                            <AvatarImage src={user.user.avatar ?? ""} />
                             <AvatarFallback>{user.user.name[0]}</AvatarFallback>
                           </Avatar>
                           <div className="min-w-0 flex-1">
@@ -224,8 +205,10 @@ export function SpotlightTab() {
                               {user.user.username}
                             </p>
                             <div className="text-muted-foreground mt-1 flex items-center gap-2 text-xs md:gap-4">
-                              <span>{user.projectsCompleted} projects</span>
-                              <span>{user.heartbeats} heartbeats</span>
+                              <span>
+                                {user.projectsCompleted} Projects Completed
+                              </span>
+                              <span>{user.heartbeats} Heartbeats</span>
                             </div>
                           </div>
                         </div>
@@ -250,51 +233,6 @@ export function SpotlightTab() {
           </Card>
         </TabsContent>
       </Tabs>
-
-      {/* Call to Action */}
-      <Card className="text-center">
-        <CardContent className="px-4 pt-4 md:px-6 md:pt-6">
-          <h3 className="mb-2 text-lg font-semibold">
-            Ready to Climb the Rankings?
-          </h3>
-          <p className="text-muted-foreground mb-4 text-sm md:text-base">
-            Start contributing to projects, create your own, and build your
-            influence in the community.
-          </p>
-          <Button
-            className="w-full md:w-auto"
-            disabled={!session}
-            onClick={() =>
-              setSelectedUser({
-                id: session?.user.id,
-                user: {
-                  id: session?.user.id,
-                  name: session?.user.name ?? "Unknown User",
-                  username:
-                    session?.user.username ??
-                    `@user${session?.user.id.slice(0, 8)}`,
-                  avatar: session?.user.image ?? "/placeholder.svg",
-                },
-                influence: 0, // Will be fetched in UserProfileModal
-                projectsCompleted: 0,
-                heartbeats: 0,
-              })
-            }
-          >
-            <Eye className="mr-2 h-4 w-4" />
-            View My Profile
-          </Button>
-        </CardContent>
-      </Card>
-
-      {/* User Profile Modal */}
-      {selectedUser && (
-        <UserProfileModal
-          user={selectedUser}
-          open={!!selectedUser}
-          onOpenChange={() => setSelectedUser(null)}
-        />
-      )}
     </div>
   );
 }

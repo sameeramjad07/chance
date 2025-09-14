@@ -8,9 +8,9 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Rocket, Heart, Calendar } from "lucide-react";
+import { Calendar } from "lucide-react";
 import { api } from "@/trpc/react";
 
 interface UserProfileModalProps {
@@ -30,12 +30,9 @@ export function UserProfileModal({
   open,
   onOpenChange,
 }: UserProfileModalProps) {
-  const { data: userData, isLoading } = api.spotlight.getUserProfile.useQuery(
-    user.id,
-    {
-      enabled: open,
-    },
-  );
+  const { data: userData } = api.spotlight.getUserProfile.useQuery(user.id, {
+    enabled: open,
+  });
 
   const joinedDate = userData?.createdAt
     ? new Date(userData.createdAt).toLocaleDateString("en-US", {

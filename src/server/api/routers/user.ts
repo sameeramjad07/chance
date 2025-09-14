@@ -33,6 +33,7 @@ export const userRouter = createTRPCRouter({
           role: users.role,
           influence: users.influence,
           isVerified: users.isVerified,
+          createdAt: users.createdAt,
         })
         .from(users)
         .where(eq(users.id, userId));
@@ -92,17 +93,38 @@ export const userRouter = createTRPCRouter({
   updateProfile: protectedProcedure
     .input(
       z.object({
-        firstName: z.string().min(1).optional(),
-        lastName: z.string().min(1).optional(),
-        username: z.string().min(3).optional(),
-        bio: z.string().optional(),
-        school: z.string().optional(),
-        instagram: z.string().optional(),
-        whatsappNumber: z.string().min(10).optional(),
-        profileImageUrl: z.string().optional(),
+        firstName: z.string().min(1, "First name is required").optional(),
+        lastName: z.string().min(1, "Last name is required").optional(),
+        username: z
+          .string()
+          .min(3, "Username must be at least 3 characters")
+          .optional(),
+        bio: z
+          .string()
+          .max(500, "Bio must be 500 characters or less")
+          .optional(),
+        school: z
+          .string()
+          .max(100, "School name must be 100 characters or less")
+          .optional(),
+        instagram: z
+          .string()
+          .regex(/^[a-zA-Z0-9._]*$/, "Invalid Instagram handle") // Allow empty string
+          .optional(),
+        whatsappNumber: z
+          .string()
+          .regex(/^\+?[1-9]\d{1,14}$/, "Invalid phone number")
+          .optional()
+          .or(z.literal("")), // Allow empty string to clear the field
+        profileImageUrl: z
+          .string()
+          .url("Invalid image URL")
+          .optional()
+          .or(z.literal("")), // Allow empty string to clear the field
       }),
     )
     .mutation(async ({ ctx, input }) => {
+      console.log("updateProfile input:", input); // Debug input
       const userId = ctx.session.user.id;
 
       // Check if username is taken (if provided)
@@ -120,10 +142,17 @@ export const userRouter = createTRPCRouter({
         }
       }
 
+      // Filter out undefined or empty strings to avoid overwriting with invalid data
+      const updateData = Object.fromEntries(
+        Object.entries(input).filter(
+          ([_, value]) => value !== undefined && value !== "",
+        ),
+      );
+
       const [updatedUser] = await db
         .update(users)
         .set({
-          ...input,
+          ...updateData,
           profileCompleted: true,
           updatedAt: new Date(),
         })
@@ -134,6 +163,7 @@ export const userRouter = createTRPCRouter({
         throw new TRPCError({ code: "NOT_FOUND", message: "User not found" });
       }
 
+      console.log("Updated user:", updatedUser); // Debug output
       return updatedUser;
     }),
 
@@ -192,6 +222,7 @@ export const userRouter = createTRPCRouter({
           email: input.email,
           firstName: input.firstName,
           lastName: input.lastName,
+          name: `${input.firstName} ${input.lastName}`.trim(),
           username,
           whatsappNumber: input.whatsappNumber,
           passwordHash: hash,

@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { useSession } from "next-auth/react";
 import { api } from "@/trpc/react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -25,7 +24,6 @@ import {
   Search,
   ImageIcon,
   Video,
-  Bookmark,
   Flag,
   Trash2,
   Send,
@@ -39,19 +37,20 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
-import Error from "next/error";
+import type { Heartbeat } from "../modals/heartbeat-types"; // Import shared type
 
 export function HeartbeatsTab() {
+  const utils = api.useUtils();
   const { data: session } = useSession();
-  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
   const [feedFilter, setFeedFilter] = useState("all");
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [selectedHeartbeat, setSelectedHeartbeat] = useState<any | null>(null);
+  const [selectedHeartbeat, setSelectedHeartbeat] = useState<Heartbeat | null>(
+    null,
+  );
   const [showComments, setShowComments] = useState(false);
   const [quickPostContent, setQuickPostContent] = useState("");
 
@@ -63,13 +62,14 @@ export function HeartbeatsTab() {
       },
     );
 
-  const heartbeats = data?.pages.flatMap((page) => page.heartbeats) || [];
+  const heartbeats: Heartbeat[] =
+    data?.pages.flatMap((page) => page.heartbeats) ?? [];
 
   const likeMutation = api.heartbeat.like.useMutation({
     onSuccess: () => {
-      api.heartbeat.getAll.invalidate();
+      utils.heartbeat.getAll.invalidate();
     },
-    onError: (error: Error) => {
+    onError: () => {
       toast("Error");
     },
   });
@@ -77,9 +77,9 @@ export function HeartbeatsTab() {
   const deleteMutation = api.heartbeat.delete.useMutation({
     onSuccess: () => {
       toast("Success! Post deleted successfully");
-      api.heartbeat.getAll.invalidate();
+      utils.heartbeat.getAll.invalidate();
     },
-    onError: (error: Error) => {
+    onError: () => {
       toast("Error");
     },
   });
@@ -87,7 +87,7 @@ export function HeartbeatsTab() {
   const shareMutation = api.heartbeat.share.useMutation({
     onSuccess: ({ shareUrl }, { shareType }) => {
       if (shareType === "copy") {
-        navigator.clipboard.write(shareUrl);
+        navigator.clipboard.writeText(shareUrl);
         toast("Link copied");
       } else {
         const shareUrls = {
@@ -98,7 +98,7 @@ export function HeartbeatsTab() {
         window.open(shareUrls[shareType], "_blank");
       }
     },
-    onError: (error: Error) => {
+    onError: () => {
       toast("Error");
     },
   });
@@ -106,14 +106,14 @@ export function HeartbeatsTab() {
   const filteredHeartbeats = heartbeats.filter((heartbeat) => {
     const matchesSearch =
       heartbeat.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (heartbeat.user.username &&
+      (heartbeat.user?.username &&
         heartbeat.user.username
           .toLowerCase()
           .includes(searchQuery.toLowerCase()));
 
     switch (feedFilter) {
       case "trending":
-        return matchesSearch && heartbeat.likeCount > 20;
+        return matchesSearch && heartbeat.likes > 20;
       case "following":
         return matchesSearch; // Add following logic if implemented
       case "projects":
@@ -157,17 +157,13 @@ export function HeartbeatsTab() {
     }
   };
 
-  const openComments = (heartbeat: any) => {
+  const openComments = (heartbeat: Heartbeat) => {
     setSelectedHeartbeat(heartbeat);
     setShowComments(true);
   };
 
   const extractHashtags = (content: string) => {
-    return content.match(/#[^\s#]+/g) || [];
-  };
-
-  const extractMentions = (content: string) => {
-    return content.match(/@[^\s@]+/g) || [];
+    return content.match(/#[^\s#]+/g) ?? [];
   };
 
   return (
@@ -288,11 +284,7 @@ export function HeartbeatsTab() {
       {/* Heartbeats Feed */}
       {filteredHeartbeats.map((heartbeat) => {
         const isOwner = session?.user.id === heartbeat.userId;
-        const isLiked = heartbeatLikes.some(
-          (like) =>
-            like.heartbeatId === heartbeat.id &&
-            like.userId === session?.user.id,
-        );
+        const isLiked = heartbeat.isLikedByUser;
 
         return (
           <Card
@@ -384,13 +376,21 @@ export function HeartbeatsTab() {
                 </div>
 
                 {/* Media */}
-                {heartbeat.imageUrl && (
+                {(heartbeat.imageUrl ?? heartbeat.videoUrl) && (
                   <div className="overflow-hidden rounded-lg">
-                    <img
-                      src={heartbeat.imageUrl}
-                      alt="Heartbeat content"
-                      className="h-auto max-h-80 w-full cursor-pointer object-cover transition-opacity hover:opacity-95 md:max-h-96"
-                    />
+                    {heartbeat.imageUrl ? (
+                      <img
+                        src={heartbeat.imageUrl}
+                        alt="Heartbeat content"
+                        className="h-auto max-h-80 w-full cursor-pointer object-cover transition-opacity hover:opacity-95 md:max-h-96"
+                      />
+                    ) : (
+                      <video
+                        src={heartbeat.videoUrl!}
+                        className="h-auto max-h-80 w-full cursor-pointer object-cover transition-opacity hover:opacity-95 md:max-h-96"
+                        controls
+                      />
+                    )}
                   </div>
                 )}
 
@@ -412,8 +412,8 @@ export function HeartbeatsTab() {
                 {/* Engagement Stats */}
                 <div className="text-muted-foreground flex items-center justify-between pt-2 text-xs md:text-sm">
                   <div className="flex items-center gap-3 md:gap-4">
-                    <span>{heartbeat.likeCount} likes</span>
-                    <span>{heartbeat.commentCount} comments</span>
+                    <span>{heartbeat.likes} likes</span>
+                    <span>{heartbeat.comments} comments</span>
                   </div>
                 </div>
 
@@ -503,7 +503,7 @@ export function HeartbeatsTab() {
         initialContent={quickPostContent}
         onSuccess={() => {
           setQuickPostContent("");
-          api.heartbeat.getAll.invalidate();
+          utils.heartbeat.getAll.invalidate();
         }}
       />
 

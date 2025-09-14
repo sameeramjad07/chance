@@ -2,7 +2,7 @@ import { z } from "zod";
 import { publicProcedure, createTRPCRouter } from "../trpc";
 import { db } from "@/server/db";
 import { users, projectsCompleted, heartbeats } from "@/server/db/schema";
-import { desc, eq, count } from "drizzle-orm";
+import { desc, eq, count, sql, and } from "drizzle-orm";
 
 export const spotlightRouter = createTRPCRouter({
   getRankings: publicProcedure
@@ -13,6 +13,16 @@ export const spotlightRouter = createTRPCRouter({
       }),
     )
     .query(async ({ input }) => {
+      // Build the where clause based on timeframe
+      const whereClause = and(
+        input.timeframe !== "allTime" ? eq(users.isVerified, true) : undefined,
+        input.timeframe === "weekly"
+          ? sql`${users.updatedAt} >= CURRENT_DATE - INTERVAL '7 days'`
+          : input.timeframe === "monthly"
+            ? sql`${users.updatedAt} >= CURRENT_DATE - INTERVAL '30 days'`
+            : undefined,
+      );
+
       const query = db
         .select({
           id: users.id,
@@ -21,18 +31,14 @@ export const spotlightRouter = createTRPCRouter({
           profileImageUrl: users.profileImageUrl,
           influence: users.influence,
           projectsCompleted: count(projectsCompleted.id).as(
-            "projects_completed",
+            "projectsCompleted",
           ),
-          heartbeats: count(heartbeats.id).as("heartbeats_count"),
+          heartbeats: count(heartbeats.id).as("heartbeats"),
         })
         .from(users)
         .leftJoin(projectsCompleted, eq(users.id, projectsCompleted.userId))
         .leftJoin(heartbeats, eq(users.id, heartbeats.userId))
-        .where(
-          input.timeframe !== "allTime"
-            ? eq(users.isVerified, true)
-            : undefined,
-        )
+        .where(whereClause)
         .groupBy(
           users.id,
           users.name,
@@ -42,16 +48,6 @@ export const spotlightRouter = createTRPCRouter({
         )
         .orderBy(desc(users.influence))
         .limit(input.limit);
-
-      if (input.timeframe === "weekly") {
-        query.where(
-          sql`${users.updatedAt} >= CURRENT_DATE - INTERVAL '7 days'`,
-        );
-      } else if (input.timeframe === "monthly") {
-        query.where(
-          sql`${users.updatedAt} >= CURRENT_DATE - INTERVAL '30 days'`,
-        );
-      }
 
       const results = await query;
 
@@ -65,8 +61,8 @@ export const spotlightRouter = createTRPCRouter({
           avatar: user.profileImageUrl ?? "/placeholder.svg",
         },
         influence: user.influence,
-        projectsCompleted: user.projects_completed,
-        heartbeats: user.heartbeats_count,
+        projectsCompleted: user.projectsCompleted,
+        heartbeats: user.heartbeats,
       }));
     }),
   getUserProfile: publicProcedure.input(z.string()).query(async ({ input }) => {
