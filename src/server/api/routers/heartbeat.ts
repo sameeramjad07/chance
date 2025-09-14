@@ -107,6 +107,103 @@ export const heartbeatRouter = createTRPCRouter({
       };
     }),
 
+  getById: publicProcedure.input(z.string()).query(async ({ input, ctx }) => {
+    // Fetch the heartbeat with user details, like count, and comment count
+    const results = await db
+      .select({
+        heartbeat: {
+          id: heartbeats.id,
+          content: heartbeats.content,
+          imageUrl: heartbeats.imageUrl,
+          videoUrl: heartbeats.videoUrl,
+          userId: heartbeats.userId,
+          likes: heartbeats.likes,
+          comments: heartbeats.comments,
+          visibility: heartbeats.visibility,
+          createdAt: heartbeats.createdAt,
+          updatedAt: heartbeats.updatedAt,
+        },
+        user: {
+          id: users.id,
+          name: users.name,
+          username: users.username,
+          profileImageUrl: users.profileImageUrl,
+        },
+        likeCount: count(heartbeatLikes.id).as("likeCount"),
+        commentCount: count(heartbeatComments.id).as("commentCount"),
+      })
+      .from(heartbeats)
+      .innerJoin(users, eq(heartbeats.userId, users.id))
+      .leftJoin(heartbeatLikes, eq(heartbeats.id, heartbeatLikes.heartbeatId))
+      .leftJoin(
+        heartbeatComments,
+        eq(heartbeats.id, heartbeatComments.heartbeatId),
+      )
+      .where(eq(heartbeats.id, input))
+      .groupBy(
+        heartbeats.id,
+        heartbeats.content,
+        heartbeats.imageUrl,
+        heartbeats.videoUrl,
+        heartbeats.userId,
+        heartbeats.likes,
+        heartbeats.comments,
+        heartbeats.visibility,
+        heartbeats.createdAt,
+        heartbeats.updatedAt,
+        users.id,
+        users.name,
+        users.username,
+        users.profileImageUrl,
+      )
+      .limit(1);
+
+    if (results.length === 0) {
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: "Heartbeat not found",
+      });
+    }
+
+    const { heartbeat, user, likeCount, commentCount } = results[0]!;
+
+    // Verify visibility permissions
+    if (
+      heartbeat.visibility === "private" &&
+      ctx.session?.user.id !== heartbeat.userId
+    ) {
+      throw new TRPCError({
+        code: "FORBIDDEN",
+        message: "You do not have permission to view this private heartbeat",
+      });
+    }
+
+    // Check if the authenticated user has liked the heartbeat
+    let isLikedByUser = false;
+    if (ctx.session?.user.id) {
+      const like = await db
+        .select({ id: heartbeatLikes.id })
+        .from(heartbeatLikes)
+        .where(
+          and(
+            eq(heartbeatLikes.heartbeatId, input),
+            eq(heartbeatLikes.userId, ctx.session.user.id),
+          ),
+        )
+        .limit(1);
+
+      isLikedByUser = like.length > 0;
+    }
+
+    return {
+      ...heartbeat,
+      user,
+      likes: likeCount, // Use aggregated count for consistency
+      comments: commentCount, // Use aggregated count for consistency
+      isLikedByUser,
+    };
+  }),
+
   create: protectedProcedure
     .input(
       insertHeartbeatSchema.extend({

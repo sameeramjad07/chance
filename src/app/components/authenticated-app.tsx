@@ -65,7 +65,7 @@ export function AuthenticatedApp() {
                 <Button
                   size="sm"
                   variant="outline"
-                  className="hidden cursor-pointer bg-transparent sm:flex"
+                  className="flex cursor-pointer bg-transparent"
                 >
                   <Settings className="h-4 w-4" />
                 </Button>

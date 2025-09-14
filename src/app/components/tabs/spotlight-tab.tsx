@@ -154,8 +154,7 @@ export function SpotlightTab() {
                 Detailed Rankings
               </CardTitle>
               <CardDescription className="text-sm">
-                Complete leaderboard with influence points and contribution
-                stats.
+                Complete leaderboard with influence points.
               </CardDescription>
             </CardHeader>
             <CardContent className="px-4 md:px-6">
@@ -169,10 +168,11 @@ export function SpotlightTab() {
                   {leaderboard?.map((user: LeaderboardUser) => (
                     <div
                       key={user.id}
-                      className={`hover:bg-muted/50 flex cursor-pointer items-center justify-between rounded-lg border p-3 transition-colors md:p-4 ${
+                      className={`hover:bg-muted/50 flex cursor-pointer flex-col items-start justify-between rounded-lg border p-3 transition-colors md:flex-row md:items-center md:p-4 ${
                         user.rank <= 3 ? "bg-muted/30" : "bg-card"
                       }`}
                     >
+                      {/* Left side - Rank + User */}
                       <div className="flex min-w-0 flex-1 items-center gap-2 md:gap-4">
                         {/* Rank */}
                         <div className="flex flex-shrink-0 items-center gap-1 md:gap-2">
@@ -201,27 +201,18 @@ export function SpotlightTab() {
                             <p className="truncate text-sm font-semibold md:text-base">
                               {user.user.name}
                             </p>
-                            <p className="text-muted-foreground truncate text-xs md:text-sm">
-                              {user.user.username}
-                            </p>
-                            <div className="text-muted-foreground mt-1 flex items-center gap-2 text-xs md:gap-4">
-                              <span>
-                                {user.projectsCompleted} Projects Completed
-                              </span>
-                              <span>{user.heartbeats} Heartbeats</span>
-                            </div>
                           </div>
                         </div>
                       </div>
 
-                      {/* Stats */}
-                      <div className="flex-shrink-0 text-right">
-                        <div className="flex items-center justify-end gap-1 md:gap-2">
+                      {/* Influence Stats */}
+                      <div className="mt-2 flex-shrink-0 text-left md:mt-0 md:text-right">
+                        <div className="flex flex-col items-start md:items-end">
                           <span className="text-primary text-sm font-bold md:text-lg">
                             {user.influence.toLocaleString()}
                           </span>
                           <span className="text-muted-foreground text-xs">
-                            Influence
+                            Total People Influenced
                           </span>
                         </div>
                       </div>

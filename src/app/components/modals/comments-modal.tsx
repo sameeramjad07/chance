@@ -16,7 +16,7 @@ import { Separator } from "@/components/ui/separator";
 import { Send, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "@/trpc/react";
-import type { Heartbeat, HeartbeatCommentWithUser } from "./heartbeat-types";
+import type { Heartbeat, HeartbeatCommentWithUser } from "./types";
 
 interface CommentsModalProps {
   heartbeat: Heartbeat;

@@ -40,7 +40,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
-import type { Heartbeat } from "../modals/heartbeat-types"; // Import shared type
+import type { Heartbeat } from "../modals/types"; // Import shared type
 
 export function HeartbeatsTab() {
   const utils = api.useUtils();
@@ -139,7 +139,20 @@ export function HeartbeatsTab() {
       toast("You need to be signed in to share posts");
       return;
     }
-    shareMutation.mutate({ heartbeatId, shareType });
+
+    const shareUrl = `${window.location.origin}/heartbeats/${heartbeatId}`;
+
+    if (shareType === "copy") {
+      navigator.clipboard.writeText(shareUrl);
+      toast("Link copied");
+    } else {
+      const shareUrls = {
+        instagram: `https://www.instagram.com/?url=${encodeURIComponent(shareUrl)}`,
+        facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`,
+        whatsapp: `https://api.whatsapp.com/send?text=${encodeURIComponent(shareUrl)}`,
+      };
+      window.open(shareUrls[shareType], "_blank");
+    }
   };
 
   const handleDelete = (heartbeatId: string) => {
@@ -303,12 +316,10 @@ export function HeartbeatsTab() {
                     </AvatarFallback>
                   </Avatar>
                   <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <p className="truncate text-sm font-semibold md:text-base">
-                        {heartbeat.user.name}
-                      </p>
-                    </div>
-                    <p className="text-muted-foreground truncate text-xs md:text-sm">
+                    <p className="truncate text-sm font-semibold md:text-base">
+                      {heartbeat.user.name}
+                    </p>
+                    <p className="text-muted-foreground text-xs break-words md:text-sm">
                       {heartbeat.user.username} •{" "}
                       {new Date(heartbeat.createdAt).toLocaleString()}
                     </p>

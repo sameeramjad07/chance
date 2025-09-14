@@ -86,7 +86,8 @@ export function CreateModal({
       setErrors({});
     },
     onError: (error) => {
-      toast.error(`Error: ${error.message}`);
+      toast.error(`Error creating project: ${error.message}`);
+      console.error("Project creation error:", error);
     },
   });
 
@@ -102,10 +103,13 @@ export function CreateModal({
   };
 
   const handleCreateProject = () => {
+    // Convert string inputs to numbers where necessary
     const parsedData = {
       ...formData,
-      teamSize: parseInt(formData.teamSize) || 0,
-      peopleInfluenced: parseInt(formData.peopleInfluenced) || 0,
+      teamSize: formData.teamSize ? parseInt(formData.teamSize) : undefined,
+      peopleInfluenced: formData.peopleInfluenced
+        ? parseInt(formData.peopleInfluenced)
+        : undefined,
     };
 
     const result = projectSchema.safeParse(parsedData);
@@ -119,13 +123,14 @@ export function CreateModal({
         teamSize: fieldErrors.teamSize?.[0],
         effort: fieldErrors.effort?.[0],
         peopleInfluenced: fieldErrors.peopleInfluenced?.[0],
+        visibility: fieldErrors.visibility?.[0],
       });
       toast.error("Please fill in all required fields correctly");
       return;
     }
 
     createProject.mutate({
-      ...parsedData,
+      ...result.data,
       requiredTools: projectTags,
       typeOfPeople: undefined,
       actionPlan: [],
@@ -152,7 +157,6 @@ export function CreateModal({
           </TabsList>
 
           <TabsContent value="project" className="space-y-4">
-            {/* ---- project form remains unchanged ---- */}
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="project-title">Project Title</Label>
@@ -181,17 +185,28 @@ export function CreateModal({
                     <SelectValue placeholder="Select a category" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="AI/ML">AI/ML</SelectItem>
-                    <SelectItem value="Web Development">
-                      Web Development
+                    <SelectItem value="Education">Education</SelectItem>
+                    <SelectItem value="Healthcare">Healthcare</SelectItem>
+                    <SelectItem value="Economic Development">
+                      Economic Development
                     </SelectItem>
-                    <SelectItem value="Mobile Apps">Mobile Apps</SelectItem>
-                    <SelectItem value="E-commerce">E-commerce</SelectItem>
-                    <SelectItem value="Social Impact">Social Impact</SelectItem>
-                    <SelectItem value="Web3/Blockchain">
-                      Web3/Blockchain
+                    <SelectItem value="Environment">Environment</SelectItem>
+                    <SelectItem value="Social Justice">
+                      Social Justice
                     </SelectItem>
-                    <SelectItem value="Design">Design</SelectItem>
+                    <SelectItem value="Poverty Alleviation">
+                      Poverty Alleviation
+                    </SelectItem>
+                    <SelectItem value="Gender Equality">
+                      Gender Equality
+                    </SelectItem>
+                    <SelectItem value="Community Development">
+                      Community Development
+                    </SelectItem>
+                    <SelectItem value="Human Rights">Human Rights</SelectItem>
+                    <SelectItem value="Policy & Governance">
+                      Policy & Governance
+                    </SelectItem>
                     <SelectItem value="Other">Other</SelectItem>
                   </SelectContent>
                 </Select>
@@ -201,7 +216,6 @@ export function CreateModal({
               </div>
             </div>
 
-            {/* Description */}
             <div className="space-y-2">
               <Label htmlFor="project-description">Description</Label>
               <Textarea
@@ -218,7 +232,6 @@ export function CreateModal({
               )}
             </div>
 
-            {/* Impact */}
             <div className="space-y-2">
               <Label htmlFor="project-impact">Impact</Label>
               <Textarea
@@ -235,7 +248,6 @@ export function CreateModal({
               )}
             </div>
 
-            {/* People Influenced */}
             <div className="space-y-2">
               <Label htmlFor="project-people-influenced">
                 Number of People it will Influence
@@ -248,6 +260,7 @@ export function CreateModal({
                   setFormData({ ...formData, peopleInfluenced: e.target.value })
                 }
                 placeholder="e.g., 100"
+                min="1"
               />
               {errors.peopleInfluenced && (
                 <p className="text-destructive text-sm">
@@ -256,7 +269,6 @@ export function CreateModal({
               )}
             </div>
 
-            {/* Tools */}
             <div className="space-y-2">
               <Label>Technologies & Tools</Label>
               <div className="flex gap-2">
@@ -294,7 +306,6 @@ export function CreateModal({
               )}
             </div>
 
-            {/* Effort & Team Size */}
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="project-effort">Effort Level</Label>
@@ -328,6 +339,7 @@ export function CreateModal({
                     setFormData({ ...formData, teamSize: e.target.value })
                   }
                   placeholder="e.g., 4"
+                  min="1"
                 />
                 {errors.teamSize && (
                   <p className="text-destructive text-sm">{errors.teamSize}</p>
@@ -335,29 +347,6 @@ export function CreateModal({
               </div>
             </div>
 
-            {/* Visibility */}
-            <div className="space-y-2">
-              <Label htmlFor="project-visibility">Visibility</Label>
-              <Select
-                value={formData.visibility}
-                onValueChange={(value) =>
-                  setFormData({
-                    ...formData,
-                    visibility: value as "public" | "private",
-                  })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select visibility" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="public">Public</SelectItem>
-                  <SelectItem value="private">Private</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Buttons */}
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => onOpenChange(false)}>
                 Cancel
@@ -366,7 +355,7 @@ export function CreateModal({
                 onClick={handleCreateProject}
                 disabled={createProject.isPending}
               >
-                Create Project
+                {createProject.isPending ? "Creating..." : "Create Project"}
               </Button>
             </div>
           </TabsContent>

@@ -12,13 +12,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -145,25 +138,6 @@ export function CreateHeartbeatModal({
             <div className="text-muted-foreground text-right text-xs">
               {content.length}/500 characters
             </div>
-          </div>
-
-          {/* Visibility */}
-          <div className="space-y-2">
-            <Label>Visibility</Label>
-            <Select
-              value={visibility}
-              onValueChange={(value: "public" | "private") =>
-                setVisibility(value)
-              }
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="public">Public</SelectItem>
-                <SelectItem value="private">Private</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
 
           {/* Media Upload */}

@@ -297,19 +297,6 @@ export function ProjectsTab({ onCreate }: ProjectsTabProps) {
               </SelectContent>
             </Select>
           </div>
-
-          <Select
-            value={sortBy}
-            onValueChange={(value) => setSortBy(value as SortOption)}
-          >
-            <SelectTrigger className="w-[140px]">
-              <SelectValue placeholder="Sort by" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="newest">Most Recent</SelectItem>
-              <SelectItem value="upvotes">Most Popular</SelectItem>
-            </SelectContent>
-          </Select>
         </div>
 
         <div className="text-muted-foreground text-sm">

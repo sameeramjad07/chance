@@ -49,3 +49,28 @@ export interface HeartbeatCommentWithUser {
     profileImageUrl: string | null;
   } | null; // Allow null for user
 }
+
+export interface Project {
+  id: string;
+  title: string;
+  description: string;
+  category: string;
+  status: "open" | "ongoing" | "completed";
+  creatorId: string;
+  teamSize: number;
+  effort: string;
+  impact: string;
+  peopleInfluenced: number | null;
+  typeOfPeople: string | null;
+  collaboration: string | null;
+  likes: number;
+  visibility: "public" | "private";
+  createdAt: Date;
+  updatedAt: Date | null;
+  voteCount: number;
+  creator: {
+    id: string;
+    username: string | null;
+    profileImageUrl: string | null;
+  } | null;
+}

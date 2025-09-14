@@ -212,6 +212,8 @@ export const projectRouter = createTRPCRouter({
           ...input,
           creatorId: ctx.session.user.id,
           status: "open",
+          createdAt: new Date(),
+          updatedAt: new Date(),
         })
         .returning();
 
