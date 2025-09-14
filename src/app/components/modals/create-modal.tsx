@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Rocket, Heart, X, Plus } from "lucide-react";
+import { Rocket, X, Plus } from "lucide-react";
 import { api } from "@/trpc/react";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -50,7 +50,6 @@ export function CreateModal({
   onOpenChange,
   onCreate,
 }: CreateModalProps) {
-  const [activeTab, setActiveTab] = useState("project");
   const [projectTags, setProjectTags] = useState<string[]>([]);
   const [newTag, setNewTag] = useState("");
   const [formData, setFormData] = useState({
@@ -144,49 +143,16 @@ export function CreateModal({
           </DialogDescription>
         </DialogHeader>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="heartbeat" className="flex items-center gap-2">
-              <Heart className="h-4 w-4" />
-              Heartbeat
-            </TabsTrigger>
+        <Tabs value="project" className="w-full">
+          <TabsList className="grid w-full grid-cols-1">
             <TabsTrigger value="project" className="flex items-center gap-2">
               <Rocket className="h-4 w-4" />
               Project
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="heartbeat" className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="heartbeat-content">
-                What&apos;s on your mind?
-              </Label>
-              <Textarea
-                id="heartbeat-content"
-                placeholder="Share your progress, celebrate wins, ask for help, or just say hello to the community..."
-                className="min-h-[120px]"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="heartbeat-image">Add an image (optional)</Label>
-              <Input
-                id="heartbeat-image"
-                type="file"
-                accept="image/*"
-                className="cursor-pointer"
-              />
-            </div>
-
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => onOpenChange(false)}>
-                Cancel
-              </Button>
-              <Button disabled>Share Heartbeat</Button>
-            </div>
-          </TabsContent>
-
           <TabsContent value="project" className="space-y-4">
+            {/* ---- project form remains unchanged ---- */}
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="project-title">Project Title</Label>
@@ -235,6 +201,7 @@ export function CreateModal({
               </div>
             </div>
 
+            {/* Description */}
             <div className="space-y-2">
               <Label htmlFor="project-description">Description</Label>
               <Textarea
@@ -251,6 +218,7 @@ export function CreateModal({
               )}
             </div>
 
+            {/* Impact */}
             <div className="space-y-2">
               <Label htmlFor="project-impact">Impact</Label>
               <Textarea
@@ -267,6 +235,7 @@ export function CreateModal({
               )}
             </div>
 
+            {/* People Influenced */}
             <div className="space-y-2">
               <Label htmlFor="project-people-influenced">
                 Number of People it will Influence
@@ -287,6 +256,7 @@ export function CreateModal({
               )}
             </div>
 
+            {/* Tools */}
             <div className="space-y-2">
               <Label>Technologies & Tools</Label>
               <div className="flex gap-2">
@@ -324,6 +294,7 @@ export function CreateModal({
               )}
             </div>
 
+            {/* Effort & Team Size */}
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="project-effort">Effort Level</Label>
@@ -364,6 +335,7 @@ export function CreateModal({
               </div>
             </div>
 
+            {/* Visibility */}
             <div className="space-y-2">
               <Label htmlFor="project-visibility">Visibility</Label>
               <Select
@@ -385,6 +357,7 @@ export function CreateModal({
               </Select>
             </div>
 
+            {/* Buttons */}
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => onOpenChange(false)}>
                 Cancel

@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { useSession } from "next-auth/react";
 import { api } from "@/trpc/react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -25,7 +24,6 @@ import {
   Search,
   ImageIcon,
   Video,
-  Bookmark,
   Flag,
   Trash2,
   Send,
@@ -39,10 +37,10 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
+import type { Heartbeat } from "../modals/heartbeat-types"; // Import shared type
 
 export function HeartbeatsTab() {
   const utils = api.useUtils();
@@ -50,7 +48,9 @@ export function HeartbeatsTab() {
   const [searchQuery, setSearchQuery] = useState("");
   const [feedFilter, setFeedFilter] = useState("all");
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [selectedHeartbeat, setSelectedHeartbeat] = useState<any | null>(null);
+  const [selectedHeartbeat, setSelectedHeartbeat] = useState<Heartbeat | null>(
+    null,
+  );
   const [showComments, setShowComments] = useState(false);
   const [quickPostContent, setQuickPostContent] = useState("");
 
@@ -62,7 +62,8 @@ export function HeartbeatsTab() {
       },
     );
 
-  const heartbeats = data?.pages.flatMap((page) => page.heartbeats) || [];
+  const heartbeats: Heartbeat[] =
+    data?.pages.flatMap((page) => page.heartbeats) ?? [];
 
   const likeMutation = api.heartbeat.like.useMutation({
     onSuccess: () => {
@@ -112,7 +113,7 @@ export function HeartbeatsTab() {
 
     switch (feedFilter) {
       case "trending":
-        return matchesSearch && heartbeat.likeCount > 20;
+        return matchesSearch && heartbeat.likes > 20;
       case "following":
         return matchesSearch; // Add following logic if implemented
       case "projects":
@@ -156,17 +157,13 @@ export function HeartbeatsTab() {
     }
   };
 
-  const openComments = (heartbeat: any) => {
+  const openComments = (heartbeat: Heartbeat) => {
     setSelectedHeartbeat(heartbeat);
     setShowComments(true);
   };
 
   const extractHashtags = (content: string) => {
-    return content.match(/#[^\s#]+/g) || [];
-  };
-
-  const extractMentions = (content: string) => {
-    return content.match(/@[^\s@]+/g) || [];
+    return content.match(/#[^\s#]+/g) ?? [];
   };
 
   return (
@@ -379,7 +376,7 @@ export function HeartbeatsTab() {
                 </div>
 
                 {/* Media */}
-                {(heartbeat.imageUrl || heartbeat.videoUrl) && (
+                {(heartbeat.imageUrl ?? heartbeat.videoUrl) && (
                   <div className="overflow-hidden rounded-lg">
                     {heartbeat.imageUrl ? (
                       <img
@@ -415,8 +412,8 @@ export function HeartbeatsTab() {
                 {/* Engagement Stats */}
                 <div className="text-muted-foreground flex items-center justify-between pt-2 text-xs md:text-sm">
                   <div className="flex items-center gap-3 md:gap-4">
-                    <span>{heartbeat.likeCount} likes</span>
-                    <span>{heartbeat.commentCount} comments</span>
+                    <span>{heartbeat.likes} likes</span>
+                    <span>{heartbeat.comments} comments</span>
                   </div>
                 </div>
 

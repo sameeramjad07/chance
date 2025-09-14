@@ -8,9 +8,7 @@ import {
   sharingLogs,
   users,
   insertHeartbeatSchema,
-  insertHeartbeatLikeSchema,
   insertHeartbeatCommentSchema,
-  insertSharingLogSchema,
 } from "@/server/db/schema";
 import { eq, and, desc, count, lt, sql, inArray } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
@@ -30,7 +28,7 @@ export const heartbeatRouter = createTRPCRouter({
     )
     .query(async ({ input, ctx }) => {
       // Base query for heartbeats
-      let query = db
+      const query = db
         .select({
           heartbeat: heartbeats,
           user: {
@@ -120,7 +118,7 @@ export const heartbeatRouter = createTRPCRouter({
       const values: typeof heartbeats.$inferInsert = {
         content: input.content,
         userId: ctx.session.user.id,
-        visibility: input.visibility || "public",
+        visibility: input.visibility ?? "public",
         imageUrl: input.image,
         videoUrl: input.video,
       };

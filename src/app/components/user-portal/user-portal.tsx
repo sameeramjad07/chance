@@ -1,5 +1,4 @@
 "use client";
-
 import { useState, useEffect } from "react";
 import {
   Card,
@@ -13,16 +12,20 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Heart, Calendar, Edit } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Heart, Calendar, Edit, ArrowLeft } from "lucide-react";
 import { api } from "@/trpc/react";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
+import { UploadButton } from "@/lib/uploadthing";
 
 export function UserProfile() {
   const { data: session } = useSession();
+  const router = useRouter();
   const [isEditing, setIsEditing] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
+  const [isUploading, setIsUploading] = useState(false);
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -40,6 +43,16 @@ export function UserProfile() {
       enabled: !!session,
     },
   );
+
+  const updateProfile = api.user.updateProfile.useMutation({
+    onSuccess: () => {
+      setIsEditing(false);
+      toast.success("Your profile has been successfully updated.");
+    },
+    onError: (error) => {
+      toast.error(`Error updating profile: ${error.message}`);
+    },
+  });
 
   useEffect(() => {
     if (user && !isEditing) {
@@ -66,17 +79,7 @@ export function UserProfile() {
       enabled: !!session,
     });
 
-  const updateProfile = api.user.updateProfile.useMutation({
-    onSuccess: () => {
-      setIsEditing(false);
-      toast("Your profile has been successfully updated.");
-    },
-    onError: (error) => {
-      toast("Error");
-    },
-  });
-
-  const handleSave = () => {
+  const handleSaveProfile = () => {
     updateProfile.mutate(formData);
   };
 
@@ -99,47 +102,108 @@ export function UserProfile() {
 
   return (
     <div className="bg-background min-h-screen">
-      {/* Profile Header */}
-      <div className="relative">
-        <div className="container mx-auto px-6">
-          <div className="relative z-10 -mt-16 flex flex-col items-start gap-6 md:flex-row md:items-end">
+      <div className="container mx-auto px-6 pt-6">
+        <Button
+          variant="default"
+          className="bg-blue-600 text-white hover:bg-blue-700"
+          onClick={() => router.push("/")}
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back to Main Page
+        </Button>
+      </div>
+
+      <div className="bg-card/30 relative">
+        <div className="container mx-auto px-6 pt-12">
+          <div className="relative z-10 flex flex-col items-start gap-6 md:flex-row md:items-end">
             <div className="relative">
               <Avatar className="border-background h-32 w-32 border-4 shadow-xl">
                 <AvatarImage
-                  src={user?.profileImageUrl || "/placeholder.svg"}
+                  src={formData.profileImageUrl || "/placeholder.svg"}
                 />
                 <AvatarFallback className="text-2xl">
                   {(user?.firstName?.[0] ?? "") + (user?.lastName?.[0] ?? "")}
                 </AvatarFallback>
               </Avatar>
               {isEditing && (
-                <Input
-                  type="text"
-                  placeholder="Profile Image URL"
-                  value={formData.profileImageUrl}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      profileImageUrl: e.target.value,
-                    })
-                  }
-                  className="mt-2"
-                />
+                <div className="mt-2">
+                  <UploadButton
+                    endpoint="imageUploader"
+                    appearance={{
+                      button:
+                        "bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg flex items-center gap-2 shadow",
+                    }}
+                    onClientUploadComplete={(res) => {
+                      if (res && res.length > 0) {
+                        const file = res[0]!;
+                        setFormData({
+                          ...formData,
+                          profileImageUrl: file.url,
+                        });
+                        toast.success("Profile image uploaded successfully!");
+                      }
+                      setIsUploading(false);
+                    }}
+                    onUploadError={(error) => {
+                      setIsUploading(false);
+                      toast.error(`Image upload failed: ${error.message}`);
+                    }}
+                    onUploadBegin={() => setIsUploading(true)}
+                    onUploadAborted={() => setIsUploading(false)}
+                    disabled={isUploading}
+                  />
+                </div>
               )}
             </div>
-
             <div className="flex-1 pb-6">
               <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
                 <div>
-                  <h1 className="text-foreground mb-1 text-3xl font-bold">
-                    {userLoading
-                      ? "Loading..."
-                      : `${user?.firstName ?? ""} ${user?.lastName ?? ""}`.trim() ||
-                        "Unknown User"}
-                  </h1>
-                  <p className="text-muted-foreground mb-2">
-                    @{user?.username ?? "unknown"}
-                  </p>
+                  {isEditing ? (
+                    <div className="space-y-2">
+                      <Input
+                        placeholder="First Name"
+                        value={formData.firstName}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            firstName: e.target.value,
+                          })
+                        }
+                      />
+                      <Input
+                        placeholder="Last Name"
+                        value={formData.lastName}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            lastName: e.target.value,
+                          })
+                        }
+                      />
+                      <Input
+                        placeholder="Username"
+                        value={formData.username}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            username: e.target.value,
+                          })
+                        }
+                      />
+                    </div>
+                  ) : (
+                    <>
+                      <h1 className="text-foreground mb-1 text-3xl font-bold">
+                        {userLoading
+                          ? "Loading..."
+                          : `${user?.firstName ?? ""} ${user?.lastName ?? ""}`.trim() ||
+                            "Unknown User"}
+                      </h1>
+                      <p className="text-muted-foreground mb-2">
+                        @{user?.username ?? "unknown"}
+                      </p>
+                    </>
+                  )}
                   <div className="text-muted-foreground flex items-center gap-4 text-sm">
                     <div className="flex items-center gap-1">
                       <Calendar className="h-4 w-4" />
@@ -164,11 +228,12 @@ export function UserProfile() {
                     )}
                   </div>
                 </div>
-
                 <div className="flex items-center gap-3">
                   <Button
                     onClick={() => {
-                      if (!isEditing)
+                      if (isEditing) {
+                        handleSaveProfile();
+                      } else {
                         setFormData({
                           firstName: user?.firstName ?? "",
                           lastName: user?.lastName ?? "",
@@ -179,11 +244,22 @@ export function UserProfile() {
                           whatsappNumber: user?.whatsappNumber ?? "",
                           profileImageUrl: user?.profileImageUrl ?? "",
                         });
-                      setIsEditing(!isEditing);
+                        setIsEditing(true);
+                      }
                     }}
+                    disabled={isEditing && updateProfile.isPending}
+                    className={
+                      isEditing
+                        ? "bg-blue-600 text-white hover:bg-blue-700"
+                        : ""
+                    }
                   >
                     <Edit className="mr-2 h-4 w-4" />
-                    {isEditing ? "Save Profile" : "Edit Profile"}
+                    {isEditing
+                      ? updateProfile.isPending
+                        ? "Saving..." // show saving text
+                        : "Save Profile"
+                      : "Edit Profile"}
                   </Button>
                 </div>
               </div>
@@ -192,7 +268,6 @@ export function UserProfile() {
         </div>
       </div>
 
-      {/* Stats Bar */}
       <div className="border-border bg-card/50 border-b">
         <div className="container mx-auto px-6 py-6">
           <div className="grid grid-cols-2 gap-6 md:grid-cols-3">
@@ -218,7 +293,6 @@ export function UserProfile() {
         </div>
       </div>
 
-      {/* Main Content */}
       <div className="container mx-auto px-6 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="mb-8 grid w-full grid-cols-3">
@@ -226,10 +300,8 @@ export function UserProfile() {
             <TabsTrigger value="projects">Projects</TabsTrigger>
             <TabsTrigger value="heartbeats">Heartbeats</TabsTrigger>
           </TabsList>
-
           <TabsContent value="overview" className="space-y-6">
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-              {/* Bio & Info */}
               <div className="space-y-6 lg:col-span-2">
                 <Card>
                   <CardHeader>
@@ -247,13 +319,11 @@ export function UserProfile() {
                       />
                     ) : (
                       <p className="text-muted-foreground leading-relaxed">
-                        {user?.bio || "No bio provided."}
+                        {user?.bio ?? "No bio provided."}
                       </p>
                     )}
                   </CardContent>
                 </Card>
-
-                {/* Recent Heartbeats */}
                 <Card>
                   <CardHeader>
                     <CardTitle>Recent Heartbeats</CardTitle>
@@ -293,8 +363,6 @@ export function UserProfile() {
                   </CardContent>
                 </Card>
               </div>
-
-              {/* Sidebar */}
               <div className="space-y-6">
                 <Card>
                   <CardHeader>
@@ -303,6 +371,16 @@ export function UserProfile() {
                   <CardContent className="space-y-3">
                     {isEditing ? (
                       <div className="space-y-3">
+                        <Input
+                          placeholder="School"
+                          value={formData.school}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              school: e.target.value,
+                            })
+                          }
+                        />
                         <Input
                           placeholder="Instagram handle"
                           value={formData.instagram}
@@ -326,6 +404,12 @@ export function UserProfile() {
                       </div>
                     ) : (
                       <div className="space-y-3">
+                        {user?.school && (
+                          <div className="text-muted-foreground flex items-center gap-3">
+                            <span>🏫</span>
+                            {user.school}
+                          </div>
+                        )}
                         {user?.instagram && (
                           <a
                             href={`https://instagram.com/${user.instagram}`}
@@ -348,7 +432,6 @@ export function UserProfile() {
               </div>
             </div>
           </TabsContent>
-
           <TabsContent value="projects" className="space-y-6">
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
               {projectsLoading ? (
@@ -401,7 +484,6 @@ export function UserProfile() {
               )}
             </div>
           </TabsContent>
-
           <TabsContent value="heartbeats" className="space-y-6">
             <div className="space-y-4">
               {heartbeatsLoading ? (
@@ -413,7 +495,7 @@ export function UserProfile() {
                       <div className="flex gap-4">
                         <Avatar className="h-10 w-10">
                           <AvatarImage
-                            src={user?.profileImageUrl || "/placeholder.svg"}
+                            src={user?.profileImageUrl ?? "/placeholder.svg"}
                           />
                           <AvatarFallback>
                             {(user?.firstName?.[0] ?? "") +

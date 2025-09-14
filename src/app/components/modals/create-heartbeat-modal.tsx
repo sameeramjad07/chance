@@ -23,7 +23,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
-import { ImageIcon, Video, X, Plus, Hash } from "lucide-react";
+import { X, Plus, Hash } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "@/trpc/react";
 import { UploadButton } from "@/lib/uploadthing";
@@ -133,7 +133,7 @@ export function CreateHeartbeatModal({
 
           {/* Content */}
           <div className="space-y-2">
-            <Label htmlFor="heartbeat-content">What's happening?</Label>
+            <Label htmlFor="heartbeat-content">What&apos;s happening?</Label>
             <Textarea
               id="heartbeat-content"
               placeholder="Share your thoughts, progress, or ask the community for help..."
@@ -169,75 +169,70 @@ export function CreateHeartbeatModal({
           {/* Media Upload */}
           <div className="space-y-3">
             <Label>Media (Optional - Choose one)</Label>
-            <div className="flex gap-2">
-              <UploadButton
-                endpoint="imageUploader"
-                onClientUploadComplete={(res) => {
-                  if (res && res.length > 0) {
-                    const file = res[0]!; // Now TypeScript knows res is not undefined
-                    setMediaUrl(file.url);
-                    setMediaType("image"); // or "video" for videoUploader
-                    toast.success("Image uploaded successfully!");
-                  }
-                  setIsUploading(false);
-                }}
-                onUploadError={(error) => {
-                  setIsUploading(false);
-                  toast.error(`Image upload failed: ${error.message}`);
-                }}
-                onUploadBegin={() => setIsUploading(true)}
-                onUploadProgress={() => setIsUploading(true)}
-                onUploadAborted={() => setIsUploading(false)}
-                disabled={isUploading || !!mediaUrl}
-                className="ut-button:bg-primary ut-button:text-primary-foreground ut-button:hover:bg-primary/90 ut-button:rounded-lg ut-button:px-3 ut-button:py-2"
-                content={{
-                  button({ ready }) {
-                    return ready ? (
-                      <div className="flex items-center gap-2">
-                        <ImageIcon className="h-4 w-4" />
-                        <span>Add Image</span>
-                      </div>
-                    ) : (
-                      "Uploading..."
-                    );
-                  },
-                  allowedContent: "Max 4MB",
-                }}
-              />
-              <UploadButton
-                endpoint="videoUploader"
-                onClientUploadComplete={(res) => {
-                  if (res && res.length > 0) {
-                    const file = res[0]!; // Now TypeScript knows res is not undefined
-                    setMediaUrl(file.url);
-                    setMediaType("video");
-                    toast.success("Video uploaded successfully!");
-                  }
-                  setIsUploading(false);
-                }}
-                onUploadError={(error) => {
-                  setIsUploading(false);
-                  toast.error(`Video upload failed: ${error.message}`);
-                }}
-                onUploadBegin={() => setIsUploading(true)}
-                onUploadProgress={() => setIsUploading(true)}
-                onUploadAborted={() => setIsUploading(false)}
-                disabled={isUploading || !!mediaUrl}
-                className="ut-button:bg-primary ut-button:text-primary-foreground ut-button:hover:bg-primary/90 ut-button:rounded-lg ut-button:px-3 ut-button:py-2"
-                content={{
-                  button({ ready }) {
-                    return ready ? (
-                      <div className="flex items-center gap-2">
-                        <Video className="h-4 w-4" />
-                        <span>Add Video</span>
-                      </div>
-                    ) : (
-                      "Uploading..."
-                    );
-                  },
-                  allowedContent: "Max 16MB",
-                }}
-              />
+            <div className="flex gap-3">
+              <div className="flex">
+                <UploadButton
+                  endpoint="imageUploader"
+                  appearance={{
+                    button:
+                      "bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg flex items-center gap-2 shadow",
+                  }}
+                  onClientUploadComplete={(res) => {
+                    if (mediaType && mediaType !== "image") {
+                      toast.error(
+                        "You can only upload either an image OR a video, not both.",
+                      );
+                      return;
+                    }
+                    if (res && res.length > 0) {
+                      const file = res[0]!;
+                      setMediaUrl(file.url);
+                      setMediaType("image");
+                      toast.success("Image uploaded successfully!");
+                    }
+                    setIsUploading(false);
+                  }}
+                  onUploadError={(error) => {
+                    setIsUploading(false);
+                    toast.error(`Image upload failed: ${error.message}`);
+                  }}
+                  onUploadBegin={() => setIsUploading(true)}
+                  onUploadAborted={() => setIsUploading(false)}
+                  disabled={isUploading || !!mediaUrl}
+                />
+              </div>
+
+              <div className="flex">
+                <UploadButton
+                  endpoint="videoUploader"
+                  appearance={{
+                    button:
+                      "bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg flex items-center gap-2 shadow",
+                  }}
+                  onClientUploadComplete={(res) => {
+                    if (mediaType && mediaType !== "video") {
+                      toast.error(
+                        "You can only upload either a video OR an image, not both.",
+                      );
+                      return;
+                    }
+                    if (res && res.length > 0) {
+                      const file = res[0]!;
+                      setMediaUrl(file.url);
+                      setMediaType("video");
+                      toast.success("Video uploaded successfully!");
+                    }
+                    setIsUploading(false);
+                  }}
+                  onUploadError={(error) => {
+                    setIsUploading(false);
+                    toast.error(`Video upload failed: ${error.message}`);
+                  }}
+                  onUploadBegin={() => setIsUploading(true)}
+                  onUploadAborted={() => setIsUploading(false)}
+                  disabled={isUploading || !!mediaUrl}
+                />
+              </div>
             </div>
 
             {/* Uploaded Media Preview */}
@@ -318,7 +313,7 @@ export function CreateHeartbeatModal({
           </div>
 
           {/* Preview */}
-          {(content || mediaUrl || hashtags.length > 0) && (
+          {(content ?? mediaUrl ?? hashtags.length > 0) && (
             <Card>
               <CardContent className="pt-4">
                 <div className="space-y-3">

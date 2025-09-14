@@ -79,6 +79,13 @@ export const projectRouter = createTRPCRouter({
       };
     }),
 
+  getCategories: publicProcedure.query(async () => {
+    const categories = await db
+      .selectDistinct({ category: projects.category })
+      .from(projects);
+    return categories.map((c) => c.category).filter(Boolean);
+  }),
+
   getById: publicProcedure.input(z.string()).query(async ({ input }) => {
     const [result] = await db
       .select({
@@ -406,8 +413,9 @@ export const projectRouter = createTRPCRouter({
     }),
 
   upvote: protectedProcedure
-    .input(z.string())
+    .input(z.string().uuid())
     .mutation(async ({ ctx, input }) => {
+      console.log("upvote input:", input, typeof input);
       const userId = ctx.session.user.id;
       const [existing] = await db
         .select()
@@ -421,6 +429,7 @@ export const projectRouter = createTRPCRouter({
         .limit(1);
 
       if (existing) {
+        console.log("User already voted for project:", input);
         return { success: true }; // Already voted
       }
 
@@ -435,6 +444,7 @@ export const projectRouter = createTRPCRouter({
         .set({ likes: sql`${projects.likes} + 1` })
         .where(eq(projects.id, input));
 
+      console.log("Upvote successful for project:", input);
       return { success: true };
     }),
 

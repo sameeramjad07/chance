@@ -13,18 +13,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Heart, Reply, MoreHorizontal, Send, Flag, Trash2 } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { Send, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "@/trpc/react";
+import type { Heartbeat, HeartbeatCommentWithUser } from "./heartbeat-types";
 
 interface CommentsModalProps {
-  heartbeat: any;
+  heartbeat: Heartbeat;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
@@ -111,36 +106,47 @@ export function CommentsModal({
     comment,
     isReply = false,
   }: {
-    comment: any;
+    comment: HeartbeatCommentWithUser;
     isReply?: boolean;
   }) => {
-    const isOwner = session?.user.id === comment.user.id;
-    const isLiked = comment.likes.some(
-      (like: any) => like.userId === session?.user.id,
-    );
+    const isOwner = session?.user.id === comment.user?.id;
 
     return (
       <div
-        className={`space-y-3 ${isReply ? "border-muted ml-8 border-l-2 pl-4" : ""}`}
+        className={`space-y-3 ${
+          isReply ? "border-muted ml-8 border-l-2 pl-4" : ""
+        }`}
       >
         <div className="flex gap-3">
           <Avatar className="h-8 w-8">
             <AvatarImage
-              src={comment.user.profileImageUrl ?? "/placeholder.svg"}
+              src={comment.user?.profileImageUrl ?? "/placeholder.svg"}
             />
             <AvatarFallback>{comment.user?.name?.[0] ?? "U"}</AvatarFallback>
           </Avatar>
           <div className="flex-1 space-y-2">
             <div className="bg-muted rounded-lg p-3">
               <div className="mb-1 flex items-center gap-2">
-                <p className="text-sm font-semibold">{comment.user.name}</p>
+                <p className="text-sm font-semibold">
+                  {comment.user?.name ?? "Unknown"}
+                </p>
                 <p className="text-muted-foreground text-xs">
-                  {comment.user.username}
+                  {comment.user?.username ?? "unknown"}
                 </p>
                 {isOwner && (
                   <Badge variant="secondary" className="text-xs">
                     Author
                   </Badge>
+                )}
+                {isOwner && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="ml-auto h-6 w-6 p-0"
+                    onClick={() => handleDeleteComment(comment.comment.id)}
+                  >
+                    <Trash2 className="text-destructive h-4 w-4" />
+                  </Button>
                 )}
               </div>
               <p className="text-sm">{comment.comment.content}</p>
@@ -159,7 +165,7 @@ export function CommentsModal({
                 </Avatar>
                 <div className="flex flex-1 gap-2">
                   <Textarea
-                    placeholder={`Reply to ${comment.user.name}...`}
+                    placeholder={`Reply to ${comment.user?.name ?? "Unknown"}...`}
                     value={replyContent}
                     onChange={(e) => setReplyContent(e.target.value)}
                     className="min-h-[60px] resize-none text-sm"
@@ -226,8 +232,8 @@ export function CommentsModal({
               />
             )}
             <div className="text-muted-foreground flex items-center gap-4 text-xs">
-              <span>{heartbeat.likeCount} likes</span>
-              <span>{heartbeat.commentCount} comments</span>
+              <span>{heartbeat.likes} likes</span>
+              <span>{heartbeat.comments} comments</span>
             </div>
           </div>
 
@@ -260,7 +266,7 @@ export function CommentsModal({
           {/* Comments List */}
           <div className="space-y-4">
             <h3 className="text-sm font-semibold">
-              Comments ({comments?.length || 0})
+              Comments ({comments?.length ?? 0})
             </h3>
             {comments?.map((comment) => (
               <CommentComponent key={comment.comment.id} comment={comment} />

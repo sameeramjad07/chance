@@ -11,7 +11,6 @@ import {
   Heart,
   Trophy,
   Settings,
-  Bell,
   Search,
   Filter,
   LogOut,
@@ -54,28 +53,14 @@ export function AuthenticatedApp() {
               <span className="text-gradient text-2xl font-bold">CHANCE</span>
             </div>
 
-            <div className="mx-8 hidden max-w-md flex-1 items-center gap-2 lg:flex">
-              <div className="relative flex-1">
-                <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform" />
-                <input
-                  type="text"
-                  placeholder="Search projects, users, or heartbeats..."
-                  className="bg-muted focus:ring-ring w-full rounded-lg border-0 py-2 pr-4 pl-10 text-sm focus:ring-2"
-                />
-              </div>
-              <Button size="sm" variant="outline">
-                <Filter className="h-4 w-4" />
-              </Button>
-            </div>
-
             <div className="flex items-center gap-2 sm:gap-3">
-              <Button
+              {/* <Button
                 size="sm"
                 variant="outline"
                 className="hidden bg-transparent sm:flex"
               >
                 <Bell className="h-4 w-4" />
-              </Button>
+              </Button> */}
               <Link href="/profile">
                 <Button
                   size="sm"
@@ -88,7 +73,10 @@ export function AuthenticatedApp() {
               <div className="relative flex items-center gap-2">
                 <Avatar className="h-8 w-8">
                   <AvatarImage
-                    src={session?.user?.image ?? "/diverse-user-avatars.png"}
+                    src={
+                      session?.user?.profileImageUrl ??
+                      "/diverse-user-avatars.png"
+                    }
                   />
                   <AvatarFallback>
                     {session?.user?.name?.slice(0, 2).toUpperCase() ?? "JD"}
@@ -131,14 +119,6 @@ export function AuthenticatedApp() {
                 );
               })}
             </nav>
-
-            <Button
-              onClick={() => setShowCreateModal(true)}
-              className="flex items-center gap-2"
-            >
-              <Plus className="h-4 w-4" />
-              Create
-            </Button>
           </div>
         </div>
       </header>
